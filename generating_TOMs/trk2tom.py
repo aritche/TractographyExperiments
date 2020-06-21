@@ -9,6 +9,7 @@ import numpy as np
 from dipy.tracking import utils
 from dipy.tracking.life import voxel2streamline
 import cv2
+import nibabel as nib
 
 # Function to load a tractogram into a numpy array
 def load_tracts(fn):
@@ -30,90 +31,90 @@ def resample_tracts(t, n):
 
 
 def gen_TOM(streamlines, ref_file):
-    # Using an approach adapted from https://github.com/MIC-DKFZ/TractSeg/blob/master/resources/utility_scripts/trk_2_binary.py 
-    data, ref_affine, axes = load_nifti(ref_file, return_coords=True)
-    ref_shape = data.shape
+    ref_data, ref_affine = load_nifti(ref_file)
+    coords_to_array = np.linalg.inv(ref_affine) # invert the matrix to convert from points to list indices
 
-    density_map = utils.density_map(streamlines=streamlines, vol_dims=ref_shape, affine=ref_affine)
-    #print(density_map)
-    #print(density_map.shape)
+    #print(utils.apply_affine(aff=np.linalg.inv(ref_affine), pts=np.array([[0,0,0]])))
 
-    #result = voxel2streamline(streamlines, affine=ref_affine)
-    for sl in streamlines:
-        #print("Affine:")
-        #print(ref_affine)
-        #print("------")
-        #print(sl[0])
-        result = utils.apply_affine(aff=ref_affine, pts=sl)
-        #for i in range(len(sl)):
-        #    print(sl[i], result[i])
-        break
-    return 
-    
-
-
-    #print(streamlines[0,:].shape)
+   
+    # coordinates
     a = []
     b = []
     c = []
+
+    # vectors
     d = []
     e = []
     f = []
+
     i = 0
 
     collection = {}
+    collection = []
+    collection = [[[[np.array([0,0,0])] for x in range(len(ref_data[z][y]))] for y in range(len(ref_data[z]))] for z in range(len(ref_data))]
     for sl in streamlines:
         for point in range(len(sl)-1):
-            if i % 1000 == 0:
+            if i % 10 == 0:
                 x, y, z = sl[point]
+
+                # Convert from (0,0,0) = centre, to (0,0,0) = top left
+                x, y, z = list(utils.apply_affine(aff=np.linalg.inv(ref_affine), pts=np.array([[x,y,z]])))[0]
+
+                # Compute direction of movement
                 vector = np.array(sl[point+1]) - np.array(sl[point])
+
+                # Normalise the magnitude
                 size = (vector[0]**2 + vector[1]**2 + vector[2]**2)**(1/2)
-                if size != 0:
-                    u, v, w = vector / size
-                else:
-                    u, v, w = 0
-                a.append(x)
-                b.append(y)
-                c.append(z)
-                d.append(u)
-                e.append(v)
-                f.append(w)
+                u, v, w = vector / size if size != 0 else [0, 0, 0]
+
+                x, y, z = [int(x), int(y), int(z)]
+                collection[z][y][x].append(np.array([u, v, w]))
+                #if (z, y, x) in collection:
+                #    collection[(z, y, x)].append((u, v, w))
+                #else:
+                #    collection[(z, y, x)] = [(u, v, w)]
+                #collection[z, y, x]
+                #a.append(x)
+                #b.append(y)
+                #c.append(z)
+                #d.append(u)
+                #e.append(v)
+                #f.append(w)
             i += 1
 
-    """
-    for sl in sl2:
-        for point in range(len(sl)-1):
-            if i % 1000 == 0:
-                x, y, z = sl[point ]
-                nx, ny, nz = sl[point+1]
-                vs = (nx **2 + ny **2 + nz**2)**(1/2)
-                nx, ny, nz = [nx/vs, ny/vs, nz/vs]
-                a.append(x)
-                b.append(y)
-                c.append(z)
-                d.append(nx-x)
-                e.append(ny-y)
-                f.append(nz-z)
-            i += 1
-        #print(sl.shape)
-    """
+    # get means
+    for z in range(len(collection)):
+        for y in range(len(collection[z])):
+            for x in range(len(collection[z][y])):
+                collection[z][y][x] = sum(collection[z][y][x])/len(collection[z][y][x])
 
+    collection = np.array(collection)
+
+    for z in range(len(collection)):
+        im = collection[z]
+        #cv2.imshow('TOM', np.uint8(255*(im - np.min(im))/(np.max(im) - np.min(im))))
+        cv2.imshow('TOM', np.uint8(im*255))
+        cv2.waitKey(0)
     #fig = plt.figure()
     #ax = Axes3D(fig)
     #ax.scatter(a, b, c)
     #plt.show()
 
-    print(min(a), max(a), abs(max(a)-min(a)))
-    print(min(b), max(b), abs(max(b)-min(b)))
-    print(min(c), max(c), abs(max(c)-min(c)))
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.quiver(a, b, c, d, e, f)
-    plt.show()
+    #print(min(a), max(a), abs(max(a)-min(a)))
+    #print(min(b), max(b), abs(max(b)-min(b)))
+    #print(min(c), max(c), abs(max(c)-min(c)))
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+    #ax.quiver(a, b, c, d, e, f)
+    #plt.show()
 
 
 #sl = load_tracts('../../TractSeg_Replication/concatenated_result.trk')
 #sl2 = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/MCP.trk')
-sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_right.trk')
+#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_right.trk')
+#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_left.trk')
+sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CA.trk')
+#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_left.trk')
+#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_right.trk')
 ref_file = '../../DATASETS/HCP_100_SUBJECTS/672756/T1w/Diffusion/nodif_brain_mask.nii.gz'
 gen_TOM(sl, ref_file)
