@@ -112,8 +112,8 @@ def gen_TOM(streamlines, ref_file):
 #sl = load_tracts('../../TractSeg_Replication/concatenated_result.trk')
 #sl2 = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/MCP.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_right.trk')
-#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_left.trk')
-sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CA.trk')
+sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_left.trk')
+#sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CA.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_left.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_right.trk')
 ref_file = '../../DATASETS/HCP_100_SUBJECTS/672756/T1w/Diffusion/nodif_brain_mask.nii.gz'
