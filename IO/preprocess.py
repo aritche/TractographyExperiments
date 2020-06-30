@@ -1,4 +1,7 @@
-import data_utils
+from tractseg.libs import data_utils # assumes tractseg is installed
+# ALTERNATIVELY, you could import it directly if you download the file from TractSeg > tractseg > libs > data_utils.py
+# In this case, you would also need TractSeg > tractseg > libs > img_utils.py located in the same directory
+# import data_utils
 
 import nibabel as nib
 import numpy as np
