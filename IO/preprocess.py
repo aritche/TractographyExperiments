@@ -1,3 +1,10 @@
+"""
+This file generates pre-processed versions of TOMs, tract masks, and endings masks
+It achieves this by finding a bounding box for the tract using the tract mask,
+then cropping all files to this bounding box, then padding/scaling to achieve a size
+of 144 x 144 x 144 x N
+"""
+
 from tractseg.libs import data_utils # assumes tractseg is installed
 # ALTERNATIVELY, you could import it directly if you download the file from TractSeg > tractseg > libs > data_utils.py
 # In this case, you would also need TractSeg > tractseg > libs > img_utils.py located in the same directory
@@ -23,7 +30,8 @@ for subject in subjects:
     b2 = base_dir + '/preprocessed/generated_endings_masks/' + subject
     b3 = base_dir + '/preprocessed/generated_toms/' + subject
     for base in [b1, b2, b3]:
-        os.mkdir(base) # make the output subject directory
+        if os.path.exists(base) == False:
+            os.mkdir(base) # make the output subject directory
 
     for tract_fn in glob(bbox_dir + '/*'):
         # Load the mask file and compute bounding box
@@ -54,22 +62,23 @@ for subject in subjects:
         i = 0
         for fn in fns:
             # Load the file you are interested in preprocessing
-            img = nib.load(fn)
-            affine = img.affine
-            data = img.get_data()
-            
-            # Adjust the data to have 4 dimensions, since the cropping method will iterate over this fourth dim
-            if len(data.shape) == 3:
-                data = data[..., None]
+            if os.path.exists(fn):
+                img = nib.load(fn)
+                affine = img.affine
+                data = img.get_data()
+                
+                # Adjust the data to have 4 dimensions, since the cropping method will iterate over this fourth dim
+                if len(data.shape) == 3:
+                    data = data[..., None]
 
-            # Crop and pad to create a square volume of size 144 x 144 x 144
-            data, _, _, original_shape = data_utils.crop_to_nonzero(np.nan_to_num(data), bbox=bbox)
-            data, transform_applied = data_utils.pad_and_scale_img_to_square_img(data)
+                # Crop and pad to create a square volume of size 144 x 144 x 144
+                data, _, _, original_shape = data_utils.crop_to_nonzero(np.nan_to_num(data), bbox=bbox)
+                data, transform_applied = data_utils.pad_and_scale_img_to_square_img(data)
 
-            # Save the result
-            out_dir = outs[i]
-            nib.save(nib.Nifti1Image(data, affine), out_dir)
-             
+                # Save the result
+                out_dir = outs[i]
+                nib.save(nib.Nifti1Image(data, affine), out_dir)
+                 
             i += 1
 """
 # Load the nodif_brain_mask and get the bounding box of the brain region
