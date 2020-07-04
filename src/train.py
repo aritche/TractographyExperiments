@@ -2,7 +2,7 @@
 Script for training a model
 """
 import numpy as np
-from models.single_tract import CustomDataset, CustomModel
+from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -39,7 +39,6 @@ validloader = torch.utils.data.DataLoader(dataset, sampler=valid_sampler, batch_
 """
 Train the model
 """
-
 torch.cuda.empty_cache()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device: ", device)
@@ -50,11 +49,14 @@ optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
 summary(model, (3, 256, 256))
 
-"""
+print("Training...")
 for epoch in range(EPOCHS):
-    step = 0
+
+    train_loss = 0.0
+    train_step = 0
     for inputs, labels in trainloader:
-        print("Training epoch %d/%d (step %d/%d)" % (EPOCHS, len(trainloader)))
+        #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
+        inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
         output = model.forward(inputs)
 
@@ -62,5 +64,21 @@ for epoch in range(EPOCHS):
         loss.backward()
         optimizer.step()
      
-        step += 1
-"""
+        train_loss += loss.item()
+        
+        train_step += 1
+
+    valid_loss = 0.0
+    valid_step = 0
+    for inputs, labels in validloader:
+        #print("Validation epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, valid_step, len(validloader)))
+        inputs, labels = inputs.to(device), labels.to(device)
+        output = model.forward(inputs)
+
+        loss = CustomLoss(output, labels)
+     
+        valid_loss += loss.item()
+        
+        valid_step += 1
+
+    print("Epoch %d/%d:\t%.5f\t%.5f" % (epoch, EPOCHS, train_loss, valid_loss))
