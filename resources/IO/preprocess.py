@@ -153,8 +153,8 @@ def trk_to_hairnet():
 
     for subject in subjects:
         if re.match(r'^[0-9]{6}$', subject):
-            in_fn = input_dir + '/' + subject + '/tracts/CST_left.trk'
-            out_fn = output_dir + '/' + subject + '_CST_left.npy'
+            in_fn = input_dir + '/' + subject + '/tracts/CST_right.trk'
+            out_fn = output_dir + '/' + subject + '_CST_right.npy'
 
             # Load the streamlines
             trk_file = load_trk(in_fn, 'same', bbox_valid_check=False)
@@ -165,6 +165,11 @@ def trk_to_hairnet():
 
             # Resample to 100 coordinates per streamline
             streamlines = set_number_of_points(streamlines, 100)
+
+            # If fewer than 1024 streamlines, pad with empty streamlines
+            if len(streamlines) < 1024:
+                streamlines = np.zeros((1024, 100, 3))
+                streamlines += np.array(streamlines)
 
             # Reshape
             streamlines = np.array(streamlines)
