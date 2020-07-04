@@ -6,16 +6,16 @@ import os
 import numpy as np
 import cv2
 import nibabel as nib
+from glob import glob
 
 import torch
 import torch.nn as nn
-from torchsummary import summary
 
 class CustomModel(nn.Module):
     def __init__(self):
-        super(SingleTractModel, self).__init__()
+        super(CustomModel, self).__init__()
 
-        self.upsample = nn.Upsample(scale_factor=2)
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
 
@@ -70,11 +70,17 @@ class CustomModel(nn.Module):
         x = self.down_pool_8(x)
         x = self.tanh(x)
 
+        x = x.view(-1, 512)
+
         x = self.up_linear_1(x)
         x = self.relu(x)
         x = self.up_linear_2(x)
         x = self.relu(x)
+
+        x = x.view(-1, 1, 64, 64)
         x = self.upsample(x)
+
+        x = x.view(-1, 256, 8, 8)
         x = self.up_conv_3(x)
         x = self.relu(x)
         x = self.upsample(x)
@@ -110,9 +116,10 @@ def CustomLoss(output, target):
 
     return position_loss + curvature_loss
 
-def get_data(in_fn, ends_fn, out_fn):
+#def get_data(in_fn, ends_fn, out_fn):
+def get_data(in_fn, out_fn):
     # Project input TOM to 2D
-    tom = nib.load(in_fn)
+    tom = nib.load(in_fn).get_data()
     tom = np.sum(tom, axis=0)
     tom = cv2.resize(tom, (256, 256))
 
@@ -120,27 +127,29 @@ def get_data(in_fn, ends_fn, out_fn):
     tom = np.float32(tom) / 255
     tom = torch.from_numpy(tom)
 
-    # Load endings mask
-    ends = nib.load(ends_fn)
-    ends = np.sum(ends, axis=0)
-    ends = cv2.resize(ends, (256, 256))
+    # Load the tractograms
+    tractogram = np.float32(np.load(out_fn))
+    tractogram /= 255
+    tractogram = torch.from_numpy(tractogram)
 
-    
-    
-
+    return [tom, tractogram]
 
 class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, toms_dir, tractograms_dir, endings_dir):
-        self.input_files = os.listdir(toms_dir)
-        self.endings_files = os.listdir(endings_dir)
-        self.output_files = os.listdir(tractograms_dir)
+    def __init__(self, toms_dir, endings_dir, tractograms_dir):
+        #self.input_files = os.listdir(toms_dir)
+        #self.endings_files = os.listdir(endings_dir)
+        #self.output_files = os.listdir(tractograms_dir)
+        self.input_files = glob(toms_dir + '/*.nii.gz')
+        self.output_files = glob(tractograms_dir + '/*.npy')
 
         self.input_files.sort()
-        self.endings_files.sort()
+        #self.endings_files.sort()
         self.output_files.sort()
 
     # Given an index, return the loaded [data, label]
     def __getitem__(self, idx):
-        return get_data(self.input_files[idx], self.endings_files[idx], self.output_files[idx])
+        #return get_data(self.input_files[idx], self.endings_files[idx], self.output_files[idx])
+        return get_data(self.input_files[idx], self.output_files[idx])
 
     def __len__(self):
+        return len(self.input_files)
