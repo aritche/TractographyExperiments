@@ -54,6 +54,7 @@ for epoch in range(EPOCHS):
 
     train_loss = 0.0
     train_step = 0
+    model.train()
     for inputs, labels in trainloader:
         #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
         inputs, labels = inputs.to(device), labels.to(device)
@@ -70,6 +71,7 @@ for epoch in range(EPOCHS):
 
     valid_loss = 0.0
     valid_step = 0
+    model.eval()
     for inputs, labels in validloader:
         #print("Validation epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, valid_step, len(validloader)))
         inputs, labels = inputs.to(device), labels.to(device)
@@ -82,3 +84,5 @@ for epoch in range(EPOCHS):
         valid_step += 1
 
     print("Epoch %d/%d:\t%.5f\t%.5f" % (epoch, EPOCHS, train_loss, valid_loss))
+
+torch.save(model, 'final_model.pth')
