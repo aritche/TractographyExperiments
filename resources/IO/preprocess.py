@@ -12,10 +12,12 @@ from tractseg.libs import data_utils # assumes tractseg is installed
 
 import nibabel as nib
 from dipy.tracking import utils
+from dipy.tracking.streamline import set_number_of_points, select_random_set_of_streamlines
 from dipy.io.streamline import load_trk, save_trk
 import numpy as np
 from glob import glob
 import os
+import re
 
 
 def preprocess_nifti_files():
@@ -144,9 +146,36 @@ def preprocess_trk_files():
             break
         break
 
+def trk_to_hairnet():
+    input_dir  = '../../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms'
+    output_dir = '../../../DATASETS/TRACTSEG_105_SUBJECTS/preprocessed/tractograms/1024_streamlines_100_coords_CST'
+    subjects = [subject.split('/')[-1] for subject in glob(input_dir + '/*')]
+
+    for subject in subjects:
+        if re.match(r'^[0-9]{6}$', subject):
+            in_fn = input_dir + '/' + subject + '/tracts/CST_left.trk'
+            out_fn = output_dir + '/' + subject + '_CST_left.npy'
+
+            # Load the streamlines
+            trk_file = load_trk(in_fn, 'same', bbox_valid_check=False)
+            streamlines = trk_file.streamlines
+
+            # Randomly resample to get 1024 streamlines
+            streamlines = select_random_set_of_streamlines(streamlines, 1024)
+
+            # Resample to 100 coordinates per streamline
+            streamlines = set_number_of_points(streamlines, 100)
+
+            # Reshape
+            streamlines = np.array(streamlines)
+            streamlines = np.reshape(streamlines, (32, 32, 100, 3)) # HairNet shape
+
+            # Save as npy file
+            np.save(out_fn, streamlines)
+
 """
 #############
 MAIN FUNCTION
 #############
 """
-preprocess_trk_files()
+#trk_to_hairnet()

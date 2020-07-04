@@ -5,6 +5,7 @@ This is an adaptation of HairNet (Zhou et al. 2018) https://doi.org/10.1007/978-
 import os
 import numpy as np
 import cv2
+import nibabel as nib
 
 import torch
 import torch.nn as nn
@@ -109,15 +110,37 @@ def CustomLoss(output, target):
 
     return position_loss + curvature_loss
 
-class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset_dir):
-        self.data_files = {}
+def get_data(in_fn, ends_fn, out_fn):
+    # Project input TOM to 2D
+    tom = nib.load(in_fn)
+    tom = np.sum(tom, axis=0)
+    tom = cv2.resize(tom, (256, 256))
 
-        data_files[subject]
-        self.data_files = os.listdir()
-        self.data_files.sort()
+    # Preprocess input
+    tom = np.float32(tom) / 255
+    tom = torch.from_numpy(tom)
+
+    # Load endings mask
+    ends = nib.load(ends_fn)
+    ends = np.sum(ends, axis=0)
+    ends = cv2.resize(ends, (256, 256))
+
+    
+    
+
+
+class CustomDataset(torch.utils.data.Dataset):
+    def __init__(self, toms_dir, tractograms_dir, endings_dir):
+        self.input_files = os.listdir(toms_dir)
+        self.endings_files = os.listdir(endings_dir)
+        self.output_files = os.listdir(tractograms_dir)
+
+        self.input_files.sort()
+        self.endings_files.sort()
+        self.output_files.sort()
 
     # Given an index, return the loaded [data, label]
     def __getitem__(self, idx):
+        return get_data(self.input_files[idx], self.endings_files[idx], self.output_files[idx])
 
     def __len__(self):

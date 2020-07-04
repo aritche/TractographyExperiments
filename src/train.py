@@ -14,7 +14,7 @@ np.random.seed(66)
 """
 Load the data
 """
-dataset = CustomDataset('../../data')
+dataset = CustomDataset('../../data/CST_TOMs', '../../data/CST_tractograms', '../../data/CST_endings_masks')
 
 # Split into training/validation (https://stackoverflow.com/a/50544887)
 indices = list(range(len(dataset)))

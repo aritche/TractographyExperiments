@@ -52,6 +52,7 @@ def gen_TOM(streamlines, ref_file):
     collection = {}
     collection = []
     collection = [[[[np.array([0,0,0])] for x in range(len(ref_data[z][y]))] for y in range(len(ref_data[z]))] for z in range(len(ref_data))]
+    streamlines = list(utils.subsegment(streamlines, abs(ref_affine[0,0]/4)))
     for sl in streamlines:
         for point in range(len(sl)-1):
             if i % 10 == 0:
@@ -90,11 +91,11 @@ def gen_TOM(streamlines, ref_file):
 
     collection = np.array(collection)
 
-    for z in range(len(collection)):
-        im = collection[z]
+    #for z in range(len(collection)):
+    #    im = collection[z]
         #cv2.imshow('TOM', np.uint8(255*(im - np.min(im))/(np.max(im) - np.min(im))))
-        cv2.imshow('TOM', np.uint8(im*255))
-        cv2.waitKey(0)
+    #    cv2.imshow('TOM', np.uint8(im*255))
+    #    cv2.waitKey(0)
     #fig = plt.figure()
     #ax = Axes3D(fig)
     #ax.scatter(a, b, c)
@@ -108,13 +109,36 @@ def gen_TOM(streamlines, ref_file):
     #ax.quiver(a, b, c, d, e, f)
     #plt.show()
 
+    generated_nifti = nib.Nifti1Image(collection, affine=ref_affine)
+    nib.save(generated_nifti, 'test.nii.gz')
+
+    return collection
+
+
+
+def load_existing(fn):
+    data = load_nifti_data(fn)
+    return data
+
 
 #sl = load_tracts('../../TractSeg_Replication/concatenated_result.trk')
 #sl2 = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/MCP.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_right.trk')
-sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_left.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CA.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_left.trk')
 #sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/FX_right.trk')
+
+sl = load_tracts('../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CST_left.trk')
 ref_file = '../../DATASETS/HCP_100_SUBJECTS/672756/T1w/Diffusion/nodif_brain_mask.nii.gz'
-gen_TOM(sl, ref_file)
+generated_tom = gen_TOM(sl, ref_file)
+reference_tom = load_existing('../../DATASETS/tractseg_output_672756/TOM/CST_left.nii.gz')
+
+
+print(generated_tom.shape)
+print(reference_tom.shape)
+for z in range(len(generated_tom)):
+    im = generated_tom[z,:,:]
+    im2 = reference_tom[:,:,z]
+    cv2.imshow('TOM_gen', np.uint8(im*255))
+    cv2.imshow('TOM_ref', np.uint8(im2*255))
+    cv2.waitKey(0)

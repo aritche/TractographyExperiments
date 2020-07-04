@@ -1,2 +1,8 @@
 *.nii.gz
+*.trk
+*.npy
+*.swp
+*.pyc
+*.pyo
 ./data/*
+./resources/example_subject/*

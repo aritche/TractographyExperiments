@@ -24,6 +24,7 @@ output_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/generated_tract_masks"
 
 for subject in `ls -1 $subjects_dir | egrep '^[0-9]{6}$'`
 do
+    echo $subject
     for tract in `ls -1 ${subjects_dir}/${subject}/tracts`
     do
         echo $tract

@@ -47,7 +47,7 @@ def load_streamlines_v3(fn, ref):
     return streamlines
 
 fn = '../../TractSeg_Replication/running_tractseg/tractseg_output_672756/TOM/CST_left.nii.gz'
-sl = '../../DATASETS/TRACTSEG_105_SUBJECTS/672756/tracts/CA.trk'
+sl = '../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms/672756/tracts/CA.trk'
 ref_file = '../../DATASETS/HCP_100_SUBJECTS/672756/T1w/Diffusion/nodif_brain_mask.nii.gz'
 
 sls = load_streamlines(sl)

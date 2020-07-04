@@ -13,7 +13,7 @@ v1_1_dir="../../DATASETS/V1.1.0_TRACTSEG_105_SUBJECTS_V1.1.0"
 output_dir="$base_dir/generated_toms"
 mask_dir="$base_dir/generated_tract_masks"
 
-for subject in `ls -1 $v1_1_dir | egrep '^[0-9]{6}$'`
+for subject in `ls -1 $v1_1_dir | egrep '^[0-9]{6}$' | tail -82`
 do
     mkdir "$output_dir/$subject"
     for tract in `ls -1 ${v1_1_dir}/${subject}/tracts | sed 's/\.trk$//g'`
