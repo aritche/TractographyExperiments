@@ -40,12 +40,12 @@ class CustomModel(nn.Module):
         # Position decoder (32 x 32 x 512 volume -> 32 x 32 x 300)
         self.pos_conv_1 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=0)
         self.pos_conv_2 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=0)
-        self.pos_conv_3 = nn.Conv2d(in_channels=512, out_channels=100, kernel_size=1, stride=1, padding=0)
+        self.pos_conv_3 = nn.Conv2d(in_channels=512, out_channels=300, kernel_size=1, stride=1, padding=0)
 
         # Curvature decoder (32 x 32 x 512 volume -> 32 x 32 x 100)
         self.curv_conv_1 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=0)
         self.curv_conv_2 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=0)
-        self.curv_conv_3 = nn.Conv2d(in_channels=512, out_channels=300, kernel_size=1, stride=1, padding=0)
+        self.curv_conv_3 = nn.Conv2d(in_channels=512, out_channels=100, kernel_size=1, stride=1, padding=0)
 
         # Seed decoder (32 x 32 x 512 volume -> 32 x 32 x 3)
         #self.seed_conv_1 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=0)
@@ -90,11 +90,11 @@ class CustomModel(nn.Module):
         x = self.up_conv_5(x)
         x = self.relu(x)
 
-        c = self.curv_conv_1(x)
-        c = self.relu(c)
-        c = self.curv_conv_2(c)
-        c = self.tanh(c)
-        c = self.curv_conv_3(c)
+        #c = self.curv_conv_1(x)
+        #c = self.relu(c)
+        #c = self.curv_conv_2(c)
+        #c = self.tanh(c)
+        #c = self.curv_conv_3(c)
 
         p = self.pos_conv_1(x)
         p = self.relu(p)
@@ -102,19 +102,21 @@ class CustomModel(nn.Module):
         p = self.tanh(p)
         p = self.pos_conv_3(p)
 
-        return [c, p]
+        #return [c, p]
+        return p
 
 # Custom loss function
 def CustomLoss(output, target):
-    curvature_output, position_output = output
-    curvature_target, position_target = target
+    #curvature_output, position_output = output
+    #curvature_target, position_target = target
 
     criterion = nn.MSELoss()
 
     position_loss  = criterion(curvature_output, curvature_target)
-    curvature_loss = criterion(position_output, position_target)
+    #curvature_loss = criterion(position_output, position_target)
 
-    return position_loss + curvature_loss
+    #return position_loss + curvature_loss
+    return position_loss
 
 #def get_data(in_fn, ends_fn, out_fn):
 def get_data(in_fn, out_fn):
@@ -126,11 +128,13 @@ def get_data(in_fn, out_fn):
     # Preprocess input
     tom = np.float32(tom) / 255
     tom = torch.from_numpy(tom)
+    tom = tom.view(3, 256, 256)
 
     # Load the tractograms
     tractogram = np.float32(np.load(out_fn))
     tractogram /= 255
     tractogram = torch.from_numpy(tractogram)
+    tractogram = tractogram.view(300, 32, 32)
 
     return [tom, tractogram]
 
