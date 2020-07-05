@@ -166,13 +166,16 @@ def trk_to_hairnet():
             # Resample to 100 coordinates per streamline
             streamlines = set_number_of_points(streamlines, 100)
 
+            # Convert to numpy array
+            streamlines = np.array(streamlines)
+
             # If fewer than 1024 streamlines, pad with empty streamlines
             if len(streamlines) < 1024:
-                streamlines = np.zeros((1024, 100, 3))
-                streamlines += np.array(streamlines)
+                temp_streamlines = np.zeros((1024, 100, 3))
+                temp_streamlines[:streamlines.shape[0],:streamlines.shape[1], :streamlines.shape[2]] = streamlines
+                streamlines = temp_streamlines
 
             # Reshape
-            streamlines = np.array(streamlines)
             streamlines = np.reshape(streamlines, (32, 32, 100, 3)) # HairNet shape
 
             # Save as npy file
