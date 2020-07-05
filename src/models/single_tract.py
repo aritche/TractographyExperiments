@@ -111,8 +111,9 @@ def CustomLoss(output, target):
     #curvature_target, position_target = target
 
     criterion = nn.MSELoss()
+    position_loss = criterion(output, target)
 
-    position_loss  = criterion(curvature_output, curvature_target)
+    #position_loss  = criterion(curvature_output, curvature_target)
     #curvature_loss = criterion(position_output, position_target)
 
     #return position_loss + curvature_loss
@@ -132,7 +133,6 @@ def get_data(in_fn, out_fn):
 
     # Load the tractograms
     tractogram = np.float32(np.load(out_fn))
-    tractogram /= 255
     tractogram = torch.from_numpy(tractogram)
     tractogram = tractogram.view(300, 32, 32)
 
