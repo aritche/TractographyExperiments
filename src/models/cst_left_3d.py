@@ -16,6 +16,9 @@ import torch.nn as nn
 from dipy.io.streamline import load_trk
 from dipy.tracking.streamline import set_number_of_points, select_random_set_of_streamlines
 
+num_points = 40
+num_streamlines = 1024
+
 class CustomModel(nn.Module):
     def __init__(self):
         super(CustomModel, self).__init__()
@@ -137,9 +140,6 @@ def CustomLoss(output, target):
 
 #def get_data(in_fn, ends_fn, out_fn):
 def get_data(in_fn, out_fn, mean, sdev):
-    do_flip_X = False if random.randint(0,1) == 0 else True
-    do_flip_Y = False if random.randint(0,1) == 0 else True
-    do_flip_Z = False if random.randint(0,1) == 0 else True
 
     # Load volume
     tom = nib.load(in_fn).get_data() # 144 x 144 x 144 x 3
@@ -148,12 +148,17 @@ def get_data(in_fn, out_fn, mean, sdev):
 
     # Preprocess input
     tom = (tom - mean) / sdev # normalise based on dataset mean/stdev
+    """
+    do_flip_X = False if random.randint(0,1) == 0 else True
+    do_flip_Y = False if random.randint(0,1) == 0 else True
+    do_flip_Z = False if random.randint(0,1) == 0 else True
     if do_flip_X:
         tom = tom[::-1,:,:]
     if do_flip_Y:
         tom = tom[:,::-1,:]
     if do_flip_Z:
         tom = tom[:,:,::-1]
+    """
     tom = torch.from_numpy(np.float32(tom))
     tom = tom.permute(3, 0, 1, 2) # channels first for pytorch
     
@@ -162,9 +167,6 @@ def get_data(in_fn, out_fn, mean, sdev):
     streamlines = tractogram.streamlines
 
     # Preprocess the streamlines
-    num_points = 40
-    num_streamlines = 1024
-
     streamlines = select_random_set_of_streamlines(streamlines, num_streamlines)
     streamlines = set_number_of_points(streamlines, num_points)
     streamlines = np.array(streamlines)
@@ -181,7 +183,7 @@ def get_data(in_fn, out_fn, mean, sdev):
     return [tom, tractogram]
 
 class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, toms_dir, endings_dir, tractograms_dir, means=None, sdevs=None):
+    def __init__(self, toms_dir, endings_dir, tractograms_dir, means=np.array([]), sdevs=np.array([])):
             
         # Only allow CST_left files
         all_TOMs = glob(toms_dir + '/*.nii.gz')
@@ -190,7 +192,7 @@ class CustomDataset(torch.utils.data.Dataset):
             if 'CST_left.nii.gz' in fn: 
                 self.input_files.append(fn)
 
-        if means == None:
+        if len(means) == 0:
             self.means = np.float32(np.array([0, 0, 0]))
             for fn in self.input_files:
                 data = nib.load(fn).get_data()
@@ -208,7 +210,7 @@ class CustomDataset(torch.utils.data.Dataset):
 
         else:
             self.means = means
-            self.sdvs  = sdevs
+            self.sdevs  = sdevs
 
         print("NORMALISING WITH SDEVS: %f, %f, %f" % (self.sdevs[0], self.sdevs[1], self.sdevs[2]))
         print("NORMALISING WITH MEANS: %f, %f, %f" % (self.means[0], self.means[1], self.means[2]))
@@ -231,3 +233,12 @@ class CustomDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.input_files)
+
+def OutputToStreamlines(output):
+    # Convert to numpy
+    output = output.permute(1, 2, 0) # (40*3, 32, 32) -> (32, 32, 40*3)
+    output = output.cpu().detach().numpy()
+    output = np.reshape(output, (num_streamlines, num_points, 3)) # (32, 32, 40*3) -> (1024, 40, 3)
+
+    return output
+    

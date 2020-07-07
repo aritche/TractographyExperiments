@@ -19,7 +19,7 @@ Hyperparameters
 """
 EPOCHS = 500
 BATCH_SIZE = 16
-LR = 10e-4
+LR = 10e-5
 VALID_SPLIT = 0.15
 np.random.seed(66)
 torch.manual_seed(66)
@@ -59,6 +59,7 @@ print("Using device: ", device)
 model = CustomModel()
 model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1)
 
 #summary(model, (3, 256, 256))
 summary(model, (3, 144, 144, 144))
@@ -109,6 +110,7 @@ for epoch in range(EPOCHS):
         valid_step += 1
         valid_items += len(inputs)
 
+    scheduler.step(valid_loss)
     plotter.plot('loss per item', 'validation', 'Results', epoch, valid_loss/valid_items)
 
     print("Epoch %d/%d:\t%.5f\t%.5f" % (epoch, EPOCHS, train_loss/train_items, valid_loss/valid_items))
