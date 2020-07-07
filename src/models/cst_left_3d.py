@@ -181,7 +181,7 @@ def get_data(in_fn, out_fn, mean, sdev):
     return [tom, tractogram]
 
 class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, toms_dir, endings_dir, tractograms_dir):
+    def __init__(self, toms_dir, endings_dir, tractograms_dir, means=None, sdevs=None):
             
         # Only allow CST_left files
         all_TOMs = glob(toms_dir + '/*.nii.gz')
@@ -190,23 +190,28 @@ class CustomDataset(torch.utils.data.Dataset):
             if 'CST_left.nii.gz' in fn: 
                 self.input_files.append(fn)
 
-        self.means = np.float32(np.array([0, 0, 0]))
-        for fn in self.input_files:
-            data = nib.load(fn).get_data()
-            self.means += np.mean(data.reshape((-1,3)), axis=0)
-        self.means = self.means/(len(self.input_files))
+        if means == None:
+            self.means = np.float32(np.array([0, 0, 0]))
+            for fn in self.input_files:
+                data = nib.load(fn).get_data()
+                self.means += np.mean(data.reshape((-1,3)), axis=0)
+            self.means = self.means/(len(self.input_files))
 
-        print("NORMALISING WITH MEANS: %f, %f, %f" % (self.means[0], self.means[1], self.means[2]))
 
-        self.sdevs = np.float32(np.array([0, 0, 0]))
-        squared_diffs_sum = np.float32(np.array([0,0,0]))
-        for fn in self.input_files:
-            data = nib.load(fn).get_data()
-            pixels = data.reshape((-1,3))
-            squared_diffs_sum += np.sum((pixels - self.means)**2, axis=0)
-        self.sdevs  = (squared_diffs_sum / (len(self.input_files) * 144*144*144))**(1/2)
+            self.sdevs = np.float32(np.array([0, 0, 0]))
+            squared_diffs_sum = np.float32(np.array([0,0,0]))
+            for fn in self.input_files:
+                data = nib.load(fn).get_data()
+                pixels = data.reshape((-1,3))
+                squared_diffs_sum += np.sum((pixels - self.means)**2, axis=0)
+            self.sdevs  = (squared_diffs_sum / (len(self.input_files) * 144*144*144))**(1/2)
+
+        else:
+            self.means = means
+            self.sdvs  = sdevs
 
         print("NORMALISING WITH SDEVS: %f, %f, %f" % (self.sdevs[0], self.sdevs[1], self.sdevs[2]))
+        print("NORMALISING WITH MEANS: %f, %f, %f" % (self.means[0], self.means[1], self.means[2]))
 
         all_tractograms = glob(tractograms_dir + '/*.trk')
         self.output_files = []
