@@ -4,7 +4,8 @@ Script for training a model
 import numpy as np
 import os
 
-from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
+#from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
+from models.pre_sampled import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
 from resources.vis import VisdomLinePlotter
@@ -35,7 +36,7 @@ plotter = VisdomLinePlotter(env_name='HairNet Training Experiment')
 Load the data
 """
 print('Loading data...')
-dataset = CustomDataset('../data/CST_TOMs', '../data/CST_endings_masks', '../data/CST_tractograms_raw')
+dataset = CustomDataset('../data/PRE_SAMPLED/preprocessed/TOMs', '../data/PRE_SAMPLED/preprocessed/beginnings_masks', '../data/PRE_SAMPLED/preprocessed/endings_masks', '../data/PRE_SAMPLED/tractograms')
 
 # Split into training/validation (https://stackoverflow.com/a/50544887)
 indices = list(range(len(dataset)))
@@ -80,6 +81,7 @@ for epoch in range(EPOCHS):
     train_items = 0
     model.train()
     for inputs, labels in trainloader:
+        print(train_step)
         #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -115,7 +117,7 @@ for epoch in range(EPOCHS):
 
     print("Epoch %d/%d:\t%.5f\t%.5f" % (epoch, EPOCHS, train_loss/train_items, valid_loss/valid_items))
 
-    if epoch % 100 == 0:
+    if epoch % 10 == 0:
         print('Saving intermediate model...')
         torch.save(model, './results/' + model_name + '/epoch_' + str(epoch) + '.pth')
 

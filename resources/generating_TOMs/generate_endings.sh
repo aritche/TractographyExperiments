@@ -7,29 +7,39 @@ echo "Press any key to continue..."
 read dump
 
 # Directory for the create_endpoints_mask_with_clustering.py script
-py_script_dir="../../Custom_Experiment/TractSeg/tractseg/libs/create_endpoints_mask_with_clustering.py"
+py_script_dir="../../../Custom_Experiment/TractSeg/tractseg/libs/create_endpoints_mask_with_clustering.py"
 
 # File containing the affine information for the HCP data
 # Since all HCP data shares the same affine, can use any subject as the source
-ref_file="../../DATASETS/HCP_100_SUBJECTS/100307/T1w/Diffusion/nodif_brain_mask.nii.gz"
+ref_file="../../../DATASETS/HCP_100_SUBJECTS/100307/T1w/Diffusion/nodif_brain_mask.nii.gz"
 
 # Directory for subjects containing tractograms
-subjects_dir="../../DATASETS/V1.1.0_TRACTSEG_105_SUBJECTS_V1.1.0"
+#subjects_dir="../../../DATASETS/V1.1.0_TRACTSEG_105_SUBJECTS_V1.1.0"
+subjects_dir="../../data/PRE_SAMPLED/tractograms"
 
 # Output directory
-output_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/generated_endings_masks"
+#output_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/generated_endings_masks"
+output_dir="../../data/PRE_SAMPLED/endings_masks"
 
-for subject in `ls -1 $subjects_dir | egrep '^[0-9]{6}$'`
+
+for fn in `ls -1 $subjects_dir/*`
 do
-    echo $subject
-
-    subject_output="${output_dir}/${subject}"
-    mkdir $subject_output
-
-    for tract in `ls -1 ${subjects_dir}/${subject}/tracts | sed 's/\.trk//g' `
-    do
-        tractogram="${subjects_dir}/${subject}/tracts/${tract}.trk"
-
-        python3 $py_script_dir $ref_file $tractogram ${subject_output}/${tract}
-    done
+    output_fn=`echo $fn | cut -d '/' -f6 | sed 's/\.trk//g'`
+    python3 $py_script_dir $ref_file $fn ${output_dir}/${output_fn}
+    
 done
+
+#for subject in `ls -1 $subjects_dir | egrep '^[0-9]{6}$'`
+#do
+#    echo $subject
+
+#    subject_output="${output_dir}/${subject}"
+#    mkdir $subject_output
+
+#    for tract in `ls -1 ${subjects_dir}/${subject}/tracts | sed 's/\.trk//g' `
+#    do
+#        tractogram="${subjects_dir}/${subject}/tracts/${tract}.trk"
+
+#        python3 $py_script_dir $ref_file $tractogram ${subject_output}/${tract}
+#    done
+#done

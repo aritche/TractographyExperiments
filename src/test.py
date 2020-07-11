@@ -89,5 +89,5 @@ for inputs, labels in testloader:
     print('Plotting generated outputs...')
     plot_outputs(output)
 
-    #save_as_trk([0], str(i))
+    save_as_trk(output[0], str(i))
     i += 1

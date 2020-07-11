@@ -7,31 +7,39 @@ echo "Press any key to continue..."
 read dump
 
 # Directory for the trk_2_binary.py script
-py_script_dir="../../Custom_Experiment/TractSeg/resources/utility_scripts/trk_2_binary.py"
+py_script_dir="../../../Custom_Experiment/TractSeg/resources/utility_scripts/trk_2_binary.py"
 
 # File containing the affine information for the HCP data
 # Since all HCP data shares the same affine, can use any subject as the source
-ref_file="../../DATASETS/HCP_100_SUBJECTS/100307/T1w/Diffusion/nodif_brain_mask.nii.gz"
+ref_file="../../../DATASETS/HCP_100_SUBJECTS/100307/T1w/Diffusion/nodif_brain_mask.nii.gz"
 
 # Directory for subjects containing tractograms
-subjects_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms"
+#subjects_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms"
+subjects_dir="../../data/PRE_SAMPLED/tractograms"
 
 # Set to 1 if using legacy data (dataset <=V1.1.0), else set to 0
-is_legacy=0
+is_legacy=1
 
 # Output directory
-output_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/generated_tract_masks"
+#output_dir="../../DATASETS/TRACTSEG_105_SUBJECTS/generated_tract_masks"
+output_dir="../../data/PRE_SAMPLED/tract_masks"
 
-for subject in `ls -1 $subjects_dir | egrep '^[0-9]{6}$'`
+for tract_fn in `ls -1 $subjects_dir/*`
 do
-    echo $subject
-    for tract in `ls -1 ${subjects_dir}/${subject}/tracts`
-    do
-        echo $tract
-        tractogram="${subjects_dir}/${subject}/tracts/$tract"
-
-        subject_output="${output_dir}/${subject}"
-        mkdir $subject_output
-        python3 $py_script_dir $tractogram ${subject_output}/${tract}.nii.gz $ref_file $is_legacy
-    done
+    tract=`echo $tract_fn | sed 's/\.trk//g' | cut -d '/' -f6`
+    python3 $py_script_dir $tract_fn ${output_dir}/${tract}.nii.gz $ref_file $is_legacy
 done
+
+#for subject in `ls -1 $subjects_dir | egrep '^[0-9]{6}$'`
+#do
+#    echo $subject
+#    for tract in `ls -1 ${subjects_dir}/${subject}/tracts`
+#    do
+#        echo $tract
+#        tractogram="${subjects_dir}/${subject}/tracts/$tract"
+#
+#        subject_output="${output_dir}/${subject}"
+#        mkdir $subject_output
+#        python3 $py_script_dir $tractogram ${subject_output}/${tract}.nii.gz $ref_file $is_legacy
+#    done
+#done

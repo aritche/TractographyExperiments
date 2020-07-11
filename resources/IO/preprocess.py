@@ -11,6 +11,7 @@ from tractseg.libs import data_utils # assumes tractseg is installed
 # import data_utils
 
 import nibabel as nib
+from nibabel import trackvis
 from dipy.tracking import utils
 from dipy.tracking.streamline import set_number_of_points, select_random_set_of_streamlines
 from dipy.io.streamline import load_trk, save_trk
@@ -18,8 +19,11 @@ import numpy as np
 from glob import glob
 import os
 import re
+import sys
 
 
+"""
+# OLD VERSION OF CODE
 def preprocess_nifti_files():
     base_dir = '../../DATASETS/TRACTSEG_105_SUBJECTS'
     subjects = [subject.split('/')[-1] for subject in glob(base_dir + '/hcp_brain_masks/*')]
@@ -84,6 +88,35 @@ def preprocess_nifti_files():
                     nib.save(nib.Nifti1Image(data, affine), out_dir)
                      
                 i += 1
+"""
+
+# Preprocess a given subject 
+def preprocess_nifti_file(tom_fn, mask_fn, beginning_fn, ending_fn):
+    # Get the appropriate affine transformation from the mask
+    mask_object = nib.load(mask_fn[0])
+    mask_data   = mask_object.get_data()
+    affine      = mask_object.affine
+
+    # Compute the bounding box using the mask
+    if np.sum(mask_data) != 0:
+        bbox = data_utils.get_bbox_from_mask(np.nan_to_num(mask_data), 0)
+    else:
+        bbox = [[0,mask_data.shape[0]], [0,mask_data.shape[1]], [0,mask_data.shape[2]]]
+
+    # Perform the cropping/padding for all the files:
+    for fn_in, fn_out in [tom_fn, mask_fn, beginning_fn, ending_fn]:
+        data = nib.load(fn_in).get_data()
+
+        # Adjust the data to have 4 dims, since the cropping will iterate over this dim
+        if len(data.shape) == 3:
+            data = data[..., None]
+
+        # Crop and pad to create a cube volume of size 144 x 144 x 144
+        data, _, _, _ = data_utils.crop_to_nonzero(np.nan_to_num(data), bbox=bbox)
+        data, transform = data_utils.pad_and_scale_img_to_square_img(data)
+
+        # Save the new file
+        nib.save(nib.Nifti1Image(data, affine), fn_out)
 
 def preprocess_trk_files():
     base_dir   = '../../DATASETS/TRACTSEG_105_SUBJECTS'
@@ -181,9 +214,36 @@ def trk_to_hairnet():
             # Save as npy file
             np.save(out_fn, streamlines)
 
+def absolute_legacy_to_relative(fn):
+    streamlines, header = trackvis.read(fn)
+    streamlines = [s[0] for s in streamlines]
+    seeds = [sl[0] for sl in streamlines]
+
+    # Convert by setting first point in each streamline as (0,0,0) and making all coords relative to this
+    for i in range(len(streamlines)):
+        sl = streamlines[i]
+        seed = seeds[i]
+        streamlines[i] = streamlines[i] - seed
+
+    
+
 """
 #############
 MAIN FUNCTION
 #############
 """
-#trk_to_hairnet()
+#fn = '../../data/PRE_SAMPLED/tractograms/599469_0_CST_left.trk'
+#absolute_legacy_to_relative(fn)
+
+tom_in  = sys.argv[1]
+tom_out = sys.argv[2]
+
+mask_in = sys.argv[3]
+mask_out = sys.argv[4]
+
+beginning_in = sys.argv[5]
+beginning_out = sys.argv[6]
+
+ending_in = sys.argv[7]
+ending_out = sys.argv[8]
+preprocess_nifti_file([tom_in, tom_out], [mask_in, mask_out], [beginning_in, beginning_out], [ending_in, ending_out])
