@@ -151,10 +151,9 @@ def get_data(in_fn, out_fn, mean, sdev):
         streamlines = np.float32(temp_streamlines)
 
     # Convert to relative format
-    seeds = [sl[0] for sl in streamlines]
+    seeds = [sl[0].copy() for sl in streamlines]
     for i in range(len(streamlines)):
-        streamlines[i] = streamlines[i] - seeds[i]
-    seeds = np.array(seeds)
+        streamlines[i] -= seeds[i]
 
     streamlines = np.reshape(streamlines, (int(num_streamlines**(1/2)), int(num_streamlines**(1/2)), num_points*3))
     tractogram = torch.from_numpy(streamlines)
@@ -211,15 +210,19 @@ class CustomDataset(torch.utils.data.Dataset):
         return len(self.input_files)
 
 def OutputToStreamlines(output):
+    # This could probably be sped up if using torch operations e.g. https://stackoverflow.com/questions/55757255/replicate-subtensors-in-pytorch
     seeds, streamlines = output
 
-    seeds = seeds.permute(1, 2, 0) # (3, 32, 32) --> (32, 32, 3)
-    seeds = output.cpu().detach().numpy
+    seeds = seeds.permute(1, 2, 0) # (3, 32, 32) -> (32, 32, 3)
+    seeds = seeds.cpu().detach().numpy()
     seeds = np.reshape(seeds, (num_streamlines, 3))
 
     streamlines = streamlines.permute(1, 2, 0) # (40*3, 32, 32) -> (32, 32, 40*3)
     streamlines = streamlines.cpu().detach().numpy()
-    streamlines = np.reshape(streamlines, (num_streamlines, num_points, 3)) # (32, 32, 40*3) -> (1024, 40, 3)
+    streamlines = np.reshape(streamlines, (num_streamlines, num_points, 3))
+    
+    for i in range(len(streamlines)):
+        streamlines[i] = streamlines[i] + seeds[i]
 
-    return output
+    return streamlines
     
