@@ -127,4 +127,8 @@ for epoch in range(EPOCHS):
         print('Saving intermediate model...')
         torch.save(model, './results/' + model_name + '/epoch_' + str(epoch) + '.pth')
 
+    # Always save the most recent epoch
+    print('Saving current model...')
+    torch.save(model, './results/' + model_name + '/epoch_current.pth')
+
 torch.save(model, './results/' + model_name + '/final_model_epoch_' + str(epoch) +'.pth')
