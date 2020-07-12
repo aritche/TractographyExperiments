@@ -3,9 +3,10 @@ Script for training a model
 """
 import numpy as np
 import os
+import sys
 
 #from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
-from models.pre_sampled import CustomDataset, CustomModel, CustomLoss
+from models.relative import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
 from resources.vis import VisdomLinePlotter
@@ -20,7 +21,7 @@ Hyperparameters
 """
 EPOCHS = 500
 BATCH_SIZE = 16
-LR = 10e-5
+LR = 10e-6
 VALID_SPLIT = 0.15
 np.random.seed(66)
 torch.manual_seed(66)
@@ -36,7 +37,12 @@ plotter = VisdomLinePlotter(env_name='HairNet Training Experiment')
 Load the data
 """
 print('Loading data...')
-dataset = CustomDataset('../data/PRE_SAMPLED/preprocessed/TOMs', '../data/PRE_SAMPLED/preprocessed/beginnings_masks', '../data/PRE_SAMPLED/preprocessed/endings_masks', '../data/PRE_SAMPLED/tractograms')
+if len(sys.argv) == 7:
+    means = [float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3])]
+    sdevs = [float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6])]
+    dataset = CustomDataset('../data/PRE_SAMPLED/preprocessed/TOMs', '../data/PRE_SAMPLED/preprocessed/beginnings_masks', '../data/PRE_SAMPLED/preprocessed/endings_masks', '../data/PRE_SAMPLED/tractograms', means = means, sdevs = sdevs)
+else:
+    dataset = CustomDataset('../data/PRE_SAMPLED/preprocessed/TOMs', '../data/PRE_SAMPLED/preprocessed/beginnings_masks', '../data/PRE_SAMPLED/preprocessed/endings_masks', '../data/PRE_SAMPLED/tractograms')
 
 # Split into training/validation (https://stackoverflow.com/a/50544887)
 indices = list(range(len(dataset)))
@@ -83,7 +89,7 @@ for epoch in range(EPOCHS):
     for inputs, labels in trainloader:
         print(train_step)
         #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
-        inputs, labels = inputs.to(device), labels.to(device)
+        inputs, labels = inputs.to(device), [labels[0].to(device), labels[1].to(device)]
         optimizer.zero_grad()
         output = model.forward(inputs)
 
@@ -103,7 +109,7 @@ for epoch in range(EPOCHS):
     model.eval()
     for inputs, labels in validloader:
         #print("Validation epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, valid_step, len(validloader)))
-        inputs, labels = inputs.to(device), labels.to(device)
+        inputs, labels = inputs.to(device), [labels[0].to(device), labels[1].to(device)]
         output = model.forward(inputs)
 
         loss = CustomLoss(output, labels)
