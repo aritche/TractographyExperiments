@@ -178,38 +178,78 @@ def plot_two(a, b):
 
     plt.show()
 
+# Given three 2D grayscale images, normalise each and return a stacked RGB image
+# RGB will be in range [0,255]
+def normalise_stack_2d(im_x, im_y, im_z):
+    im_x = (im_x - np.min(im_x)) / (np.max(im_x) - np.min(im_x))*255
+    im_y = (im_y - np.min(im_y)) / (np.max(im_y) - np.min(im_y))*255
+    im_z = (im_z - np.min(im_z)) / (np.max(im_z) - np.min(im_z))*255
+    
+    return np.stack([im_x, im_y, im_z], axis=2)
+
+# Given three 2D grayscale images, and a 3 corresponding max/max values, 
+# normalise them and return a stacked RGB image
+# RGB will be in range [0,255]
+def normalise_stack_generic(im_x, im_y, im_z, min_x, max_x, min_y, max_y, min_z, max_z):
+    im_x = (im_x - min_x) / (max_x - min_x)*255
+    im_y = (im_y - min_y) / (max_y - min_y)*255
+    im_z = (im_z - min_z) / (max_z - min_z)*255
+    
+    return np.stack([im_x, im_y, im_z], axis=2)
+
 def plot_output_volume(output, label):
     seeds, coords = output
     label_seeds, label_coords = label
 
+    """
+    PLOT THE SEEDS
+    """
     seeds = seeds.permute(1, 2, 0) # (3, 32, 32) -> (32, 32, 3)
     seeds = seeds.cpu().detach().numpy()
     label_seeds = label_seeds.permute(1, 2, 0) # (3, 32, 32) -> (32, 32, 3)
     label_seeds = label_seeds.cpu().detach().numpy()
 
-    im_x = seeds[:,:,0]
-    im_y = seeds[:,:,1]
-    im_z = seeds[:,:,2]
-    im_x = (im_x - np.min(im_x)) / (np.max(im_x) - np.min(im_x))*255
-    im_y = (im_y - np.min(im_y)) / (np.max(im_y) - np.min(im_y))*255
-    im_z = (im_z - np.min(im_z)) / (np.max(im_z) - np.min(im_z))*255
-    seeds_norm = np.stack([im_x, im_y, im_z], axis=2)
+    seeds_norm = normalise_stack_2d(seeds[:,:,0], seeds[:,:,1], seeds[:,:,2])
     cv2.namedWindow('seeds_norm', cv2.WINDOW_NORMAL)
 
-
-    im_x = label_seeds[:,:,0]
-    im_y = label_seeds[:,:,1]
-    im_z = label_seeds[:,:,2]
-    im_x = (im_x - np.min(im_x)) / (np.max(im_x) - np.min(im_x))*255
-    im_y = (im_y - np.min(im_y)) / (np.max(im_y) - np.min(im_y))*255
-    im_z = (im_z - np.min(im_z)) / (np.max(im_z) - np.min(im_z))*255
-    label_seeds_norm = np.stack([im_x, im_y, im_z], axis=2)
+    label_seeds_norm = normalise_stack_2d(label_seeds[:,:,0], label_seeds[:,:,1], label_seeds[:,:,2])
     cv2.namedWindow('label_seeds_norm', cv2.WINDOW_NORMAL)
-
 
     cv2.imshow('seeds_norm', np.uint8(seeds_norm))
     cv2.imshow('label_seeds_norm', np.uint8(label_seeds_norm))
     cv2.waitKey(0)
+
+
+    """
+    PLOT THE COORDINATES
+    """
+    coords = coords.permute(1, 2, 0) # (120, 32, 32) -> (32, 32, 120)
+    coords = coords.cpu().detach().numpy()
+    coords = np.reshape(coords, (32, 32, 40, 3)) # convert to RGB volume
+    label_coords = label_coords.permute(1, 2, 0) # (120, 32, 32) -> (32, 32, 120)
+    label_coords = label_coords.cpu().detach().numpy()
+    label_coords = np.reshape(label_coords, (32, 32, 40, 3)) # convert to RGB volume
+
+    min_x_coords, min_y_coords, min_z_coords = np.min(coords[:,:,0]), np.min(coords[:,:,1]), np.min(coords[:,:,2])
+    max_x_coords, max_y_coords, max_z_coords = np.max(coords[:,:,0]), np.max(coords[:,:,1]), np.max(coords[:,:,2])
+
+    min_x_label_coords, min_y_label_coords, min_z_label_coords = np.min(label_coords[:,:,0]), np.min(label_coords[:,:,1]), np.min(label_coords[:,:,2])
+    max_x_label_coords, max_y_label_coords, max_z_label_coords = np.max(label_coords[:,:,0]), np.max(label_coords[:,:,1]), np.max(label_coords[:,:,2])
+
+    cv2.namedWindow('coords_norm', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('label_coords_norm', cv2.WINDOW_NORMAL)
+    for i in range(len(label_coords[2])):
+        coords_slice = coords[:,:,i,:]
+        coords_norm = normalise_stack_generic(coords_slice[:,:,0], coords_slice[:,:,1], coords_slice[:,:,2], min_x_coords, max_x_coords, min_y_coords, max_y_coords, min_z_coords, max_z_coords)
+
+        label_coords_slice = label_coords[:,:,i,:]
+        label_coords_norm = normalise_stack_generic(label_coords_slice[:,:,0], label_coords_slice[:,:,1], label_coords_slice[:,:,2], min_x_label_coords, max_x_label_coords, min_y_label_coords, max_y_label_coords, min_z_label_coords, max_z_label_coords)
+
+        cv2.imshow('coords_norm', np.uint8(coords_norm))
+        cv2.imshow('label_coords_norm', np.uint8(label_coords_norm))
+        cv2.waitKey(0)
+
+
     """
     cv2.imshow('seeds', np.uint8(seeds))
     cv2.imshow('label_seeds', np.uint8(label_seeds))
