@@ -4,7 +4,8 @@ NOTE: THIS FILE ONLY WORKS WITH <=V1.1.0 OF THE ZENODO TRACTSEG DATASET
 Given a tractogram, this file will generate 'offspring' tractograms that
 are random sub-samples of the streamlines of the input tractogram, e.g.
 if the input has 5983 streamlines, the program can generate N new tractograms
-of X streamlines by randomly sampling N times from the input
+of X streamlines by randomly sampling N times from the input. It will also
+re-sample each streamline to have a fixed number of points.
 """
 import dipy
 from nibabel import trackvis
@@ -39,7 +40,7 @@ def get_offspring(tractogram_fn, num_sl_to_sample, output_dir, subject, tract_na
         # Note, new header not needed since # of streamlines is automatically updated when the file is saved
         trackvis.write(output_dir + "/" + subject + "_"+ str(i) + "_" + tract_name +".trk", streamlines=new_streams, hdr_mapping=header)
 
-if len(sys.argv) == 6:
+if len(sys.argv) == 7:
     input_fn = sys.argv[1]
     output_dir = sys.argv[2]
     subject = sys.argv[3] # prefix for the output file (e.g. a subject number)
