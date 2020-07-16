@@ -28,7 +28,15 @@ def get_offspring(tractogram_fn, num_sl_to_sample, output_dir, subject, tract_na
         new_streams = random.sample(streams, num_sl_to_sample)
 
         # Re-sample each streamline to have the required number of points
-        new_streams = set_number_of_points(new_streams, points_per_sl)
+        # Since trackvis.read returns a tuple for each streamline (with streamline coordinates being
+        #  the first element in that list, first we need to extract those actual coordinates)
+        only_streamlines = [sl[0] for sl in new_streams] # extract the actual coordinates
+        resampled_points = set_number_of_points(only_streamlines, points_per_sl)
+        
+        # Now store these resampled coordinates into the streamline tuples
+        # Since you can't modify tuples, we need to re-write the tuples entirely
+        for sl_num in range(len(new_streams)):
+            new_streams[sl_num] = (resampled_points[sl_num], new_streams[sl_num][1], new_streams[sl_num][2])
 
         # If fewer than the required number of streamlines can be sampled, pad with "0" streamlines
         diff = num_sl_to_sample - len(new_streams)
