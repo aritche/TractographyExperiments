@@ -1,0 +1,5 @@
+1. Generate streamlines (trk)    [via my own method. make sure to sample number of points per streamline]
+2. Generate tract masks          [using trk_2_binary.py helper script]
+3. Generate endings masks        [using create_endpoints_mask_with_clustering.py helper script]
+4. Generate TOMs                 [using MitkFiberDirectionExtraction.sh helper script]
+5. Pre-process the nifti files   [via my own method]
