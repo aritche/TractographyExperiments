@@ -45,8 +45,8 @@ if len(sys.argv) == 7:
     output_dir = sys.argv[2]
     subject = sys.argv[3] # prefix for the output file (e.g. a subject number)
     tract_name = sys.argv[4] # prefix for the output file (e.g. a subject number)
-    num_streamlines_per_tract = sys.argv[5]
-    points_per_sl = sys.argv[6]
+    num_streamlines_per_tract = int(sys.argv[5])
+    points_per_sl = int(sys.argv[6])
     get_offspring(input_fn, num_streamlines_per_tract, output_dir, subject, tract_name, points_per_sl)
 else:
     print("ERROR: Incorrect number of arguments.")
