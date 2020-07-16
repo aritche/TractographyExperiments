@@ -7,6 +7,7 @@ subsample_script="./subsample_tractograms.py"
 generate_masks="./tractseg_helper_scripts/trk_2_binary.py"
 generate_endings="./tractseg_helper_scripts/create_endpoints_mask_with_clustering.py"
 generate_toms="../../../../Programs/MITK-Diffusion-Ubuntu/MitkFiberDirectionExtraction.sh"
+preprocess="../IO/preprocess.py"
 
 input_base="../../../DATASETS/V1.1.0_TRACTSEG_105_SUBJECTS_V1.1.0"
 
@@ -16,11 +17,21 @@ output_masks_base="${output_base}/tract_masks"
 output_endings_base="${output_base}/endings_masks"
 output_toms_base="${output_base}/TOMs"
 
+preprocessed_masks="${output_base}/preprocessed/tract_masks"
+preprocessed_endings="${output_base}/preprocessed/endings_masks"
+preprocessed_beginnings="${output_base}/preprocessed/beginnings_masks"
+preprocessed_toms="${output_base}/preprocessed/TOMs"
+
 mkdir $output_base
 mkdir $output_trk_base
 mkdir $output_masks_base
 mkdir $output_endings_base
 mkdir $output_toms_base
+mkdir ${output_base}/preprocessed
+mkdir $preprocessed_masks
+mkdir $preprocessed_endings
+mkdir $preprocessed_beginnings
+mkdir $preprocessed_toms
 
 # Sub-sample tractograms, and output to $output_dir
 echo "How many streamlines do you want to generate per tract?"
@@ -57,4 +68,18 @@ do
     sh $generate_toms -i $trk_fn -o ${output_toms_base}/$trk_name --mask $mask --athresh 10 --peakthresh 0.1 --numdirs 1 --normalization 3 --file_ending .nii.gz
 
     # Pre-process the generated nifti files
+    tom_in="${output_toms_base}/${trk_name}_DIRECTIONS.nii.gz"
+    tom_out="${preprocessed_toms}/${trk_name}.nii.gz"
+
+    mask_in="${output_masks_base}/${trk_name}.nii.gz"
+    mask_out="${preprocessed_masks}/${trk_name}.nii.gz"
+
+    beginning_in="${output_endings_base}/${trk_name}_beginnings.nii.gz"
+    beginning_out="${preprocessed_beginnings}/${trk_name}.nii.gz"
+
+    ending_in="${output_endings_base}/${trk_name}_endings.nii.gz"
+    ending_out="${preprocessed_endings}/${trk_name}.nii.gz"
+
+    python3 $preprocess $tom_in $tom_out $mask_in $mask_out $beginning_in $beginning_out $ending_in $ending_out
+    break
 done
