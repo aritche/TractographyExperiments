@@ -130,10 +130,11 @@ for epoch in range(EPOCHS):
         output = model.forward(inputs)
 
         loss = CustomLoss(output, labels)
+        loss_item = loss.item()
      
-        valid_loss += loss.item()
+        valid_loss += loss_item * inputs.size(0)
         valid_step += 1
-        valid_items += len(inputs)
+        valid_items += inputs.size(0)
 
     scheduler.step(valid_loss)
     plotter.plot('loss per item', 'validation', 'Results', epoch, valid_loss/valid_items)
