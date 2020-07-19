@@ -41,7 +41,8 @@ def get_offspring(tractogram_fn, num_sl_to_sample, output_dir, subject, tract_na
         # If fewer than the required number of streamlines can be sampled, pad with "0" streamlines
         diff = num_sl_to_sample - len(new_streams)
         if diff > 0:
-            empty_sl = np.zeros((num_sl_to_sample, points_per_sl, 3), dtype=np.float32)
+            print("Not enough streamlines to sample, so generating empty streamlines for padding.")
+            empty_sl = np.zeros((points_per_sl, 3), dtype=np.float32)
             for num in range(diff):
                 new_streams.append(empty_sl)
             
