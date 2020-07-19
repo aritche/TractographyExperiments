@@ -132,8 +132,8 @@ def get_data(in_fn, out_fn, mean, sdev):
     # Convert tractogram to FiberMaps
     fiber_maps = generate_fibermaps(streamlines)
 
-    """
     # Visualise the FiberMaps to ensure they have been generated correctly
+    """
     cv2.namedWindow('map', cv2.WINDOW_NORMAL)
     for fm in fiber_maps:
         abs_map = fm
@@ -144,7 +144,11 @@ def get_data(in_fn, out_fn, mean, sdev):
     """
 
     # Convert fibermap to torch
-    # automatically converts list to numpy array and reshapes it
+    fiber_maps = np.array(fiber_maps)
+    fiber_maps = np.transpose(fiber_maps, (1,2,3,0))
+    # Merge the final 2 dimensions
+    #fiber_maps = np.reshape(fiber_maps, fiber_maps.shape[:-2] + (-1,))
+    #print(fiber_maps.shape)
     fiber_maps = np.reshape(fiber_maps, (points_per_sl*2, points_per_sl*2, num_sl*3))
     fiber_maps = torch.from_numpy(fiber_maps)
     fiber_maps = fiber_maps.permute(2, 0, 1) # channels first for pytorch
@@ -200,6 +204,9 @@ def OutputToStreamlines(output):
     fiber_maps = output.permute(1, 2, 0) # (5*3, 30, 30) -> (30, 30, 5*3)
     fiber_maps = fiber_maps.cpu().detach().numpy()
     fiber_maps = np.reshape(fiber_maps, (points_per_sl*2, points_per_sl*2, num_sl, 3))
+    fiber_maps = np.moveaxis(fiber_maps, [0, 2, 2], [2, 1, 0])
+
+   # for fiber_map in fiber_maps:
+        
     
-    return fiber_maps 
-    
+    return streamlines
