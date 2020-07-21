@@ -10,17 +10,17 @@ from tractseg.libs import data_utils # assumes tractseg is installed
 # In this case, you would also need TractSeg > tractseg > libs > img_utils.py located in the same directory
 # import data_utils
 
-import nibabel as nib
-from nibabel import trackvis
-from dipy.tracking import utils
-from dipy.tracking.streamline import set_number_of_points, select_random_set_of_streamlines
-from dipy.io.streamline import load_trk, save_trk
-import numpy as np
-from glob import glob
-import os
-import re
-import sys
+#from nibabel import trackvis
+#from dipy.tracking import utils
+#from dipy.tracking.streamline import set_number_of_points, select_random_set_of_streamlines
+#from dipy.io.streamline import load_trk, save_trk
+#from glob import glob
+#import os
+#import re
 
+import nibabel as nib
+import numpy as np
+import sys
 
 """
 # OLD VERSION OF CODE
@@ -118,6 +118,7 @@ def preprocess_nifti_file(tom_fn, mask_fn, beginning_fn, ending_fn):
         # Save the new file
         nib.save(nib.Nifti1Image(data, affine), fn_out)
 
+"""
 def preprocess_trk_files():
     base_dir   = '../../DATASETS/TRACTSEG_105_SUBJECTS'
     input_dir  = '../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms'
@@ -178,7 +179,9 @@ def preprocess_trk_files():
 
             break
         break
+"""
 
+"""
 def trk_to_hairnet():
     input_dir  = '../../../DATASETS/TRACTSEG_105_SUBJECTS/tractograms'
     output_dir = '../../../DATASETS/TRACTSEG_105_SUBJECTS/preprocessed/tractograms/1024_streamlines_100_coords_CST'
@@ -213,7 +216,9 @@ def trk_to_hairnet():
 
             # Save as npy file
             np.save(out_fn, streamlines)
+"""
 
+"""
 def absolute_legacy_to_relative(fn):
     streamlines, header = trackvis.read(fn)
     streamlines = [s[0] for s in streamlines]
@@ -224,6 +229,7 @@ def absolute_legacy_to_relative(fn):
         sl = streamlines[i]
         seed = seeds[i]
         streamlines[i] = streamlines[i] - seed
+"""
 
     
 
