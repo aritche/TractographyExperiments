@@ -30,11 +30,11 @@ class CustomModel(nn.Module):
                                                                                                                  # VOLUME SIZE                      # PARAMETERS
         # Encoding (input -> 512 vector)                                                                         # 3 x 144 x 144 x 144 -> 8.9M      (IN * F^3 + 1)*OUT
 
-        self.down_conv_1 = nn.Conv3d(in_channels=3, out_channels=3, kernel_size=(9,9,9), stride=1, padding=0)     # K   x 136 x 136 x 136 ->        3*(3*9^3+1)     = 6.5K
-        self.down_conv_2 = nn.Conv3d(in_channels=3, out_channels=44, kernel_size=(10,10,10), stride=2, padding=0) # K   x 64  x 64  x 64  ->        44*(3*10^3+1)   = 132K
-        self.down_conv_3 = nn.Conv3d(in_channels=44, out_channels=32, kernel_size=(6,6,6), stride=2, padding=2)   # K   x 32  x 32  x 32  ->        32*(44*6^3+1)   = 305K
-        self.down_conv_4 = nn.Conv3d(in_channels=32, out_channels=512, kernel_size=(11,11,11), stride=3, padding=0)   # K   x 16  x 16  x 16  ->        76*(32*6^3+1)   = 525K
-        #self.down_conv_5 = nn.Conv3d(in_channels=76, out_channels=288, kernel_size=(3,3,3), stride=1, padding=1)  # K   x 16  x 16  x 16  ->        288*(76*3^3+1)  = 590K
+        self.down_conv_1 = nn.Conv3d(in_channels=3, out_channels=3, kernel_size=(3,3,3), stride=1, padding=0)     # K   x 136 x 136 x 136 ->        3*(3*9^3+1)     = 6.5K
+        self.down_conv_2 = nn.Conv3d(in_channels=3, out_channels=44, kernel_size=(4,4,4), stride=3, padding=0) # K   x 64  x 64  x 64  ->        44*(3*10^3+1)   = 132K
+        self.down_conv_3 = nn.Conv3d(in_channels=44, out_channels=32, kernel_size=(3,3,3), stride=2, padding=1)   # K   x 32  x 32  x 32  ->        32*(44*6^3+1)   = 305K
+        self.down_conv_4 = nn.Conv3d(in_channels=32, out_channels=512, kernel_size=(3,3,3), stride=3, padding=0)   # K   x 16  x 16  x 16  ->        76*(32*6^3+1)   = 525K
+        #self.down_conv_5 = nn.Conv3d(in_channels=64, out_channels=512, kernel_size=(4,4,4), stride=2, padding=1)  # K   x 16  x 16  x 16  ->        288*(76*3^3+1)  = 590K
         #self.down_conv_6 = nn.Conv3d(in_channels=288, out_channels=150, kernel_size=(4,4,4), stride=2, padding=1) # K   x 8   x 8   x 8   ->        150*(288*4^3+1) = 2.7M
         #self.down_conv_7 = nn.Conv3d(in_channels=150, out_channels=512, kernel_size=(3,3,3), stride=1, padding=1) # K   x 8   x 8   x 8   ->        512*(150*3^3+1) = 2.1M
         self.down_pool_8 = nn.MaxPool3d(kernel_size=8)                                                            # 512 x 1   x 1   x 1                  
@@ -58,15 +58,15 @@ class CustomModel(nn.Module):
 
     def forward(self, x):
         # Input: 3 x 144 x 144 x 144
-        x = self.down_conv_1(x) # Output: (3, 136, 136, 136)
+        x = self.down_conv_1(x) # Output: (3, 142, 142, 142)
         x = self.relu(x)
-        x = self.down_conv_2(x) # Output: (44, 64, 64, 64)
+        x = self.down_conv_2(x) # Output: (44, 47, 47, 47)
         x = self.relu(x)
-        x = self.down_conv_3(x) # Output: (32, 32, 32, 32)
+        x = self.down_conv_3(x) # Output: (32, 24, 24, 24)
         x = self.relu(x)
         x = self.down_conv_4(x) # Output: (512, 8, 8, 8)
         x = self.relu(x)
-        #x = self.down_conv_5(x) # Output: (288, 16, 16, 16 )
+        #x = self.down_conv_5(x) # Output: (512, 8, 8, 8 )
         #x = self.relu(x)
         #x = self.down_conv_6(x) # Output: (150, 8, 8, 8)
         #x = self.relu(x)
@@ -117,6 +117,7 @@ def CustomLoss(output, target):
 
     print(position_loss, seed_loss)
     return position_loss + seed_loss
+    #return [seed_loss, position_loss]
 
 def get_data(in_fn, out_fn, mean, sdev):
     # Load TOM volume and preprocess
