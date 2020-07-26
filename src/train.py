@@ -22,7 +22,7 @@ import time
 Hyperparameters
 """
 EPOCHS = 500
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 LR = 10e-4
 VALID_SPLIT = 0.15
 np.random.seed(66)
@@ -105,38 +105,66 @@ torch.cuda.empty_cache()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device: ", device)
 
-model = CustomModel()
+to_load = input("Do you want to load a model and continue training? [Y/N]")
+if to_load == 'Y' or to_load == 'y':
+    model_name = input("Model name:")
+    epoch_number = input("Epoch:")
+    model_fn = './results/' + model_name + '/epoch_' + epoch_number + '.pth'
+    while not os.path.exists('./results/' + model_name):
+        print("Model does not exist. Please try again.")
+        model_name = input("Model name:")
+        epoch_number = input("Epoch:")
+        model_fn = './results/' + model_name + '/epoch_' + epoch_number + '.pth'
+    model = torch.load(model_fn)
+else:
+    # Create the model
+    model = CustomModel()
+
+    # Create the results directory
+    model_name = input('** Name for the model (no spaces) [enter "dump" for no results]:')
+    if model_name != "dump":
+        while os.path.exists('./results/' + model_name):
+            model_name = input('Model already exists. Please enter another name:')
+        os.mkdir('./results/' + model_name) 
+
+# Send to device
 model.to(device)
+
+# Init optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1)
 
-#summary(model, (3, 256, 256))
+# Print a summary
 summary(model, (3, 144, 144, 144))
+input('Press any key to begin training...')
 
-# Create the results directory
-model_name = input('** Name for the model (no spaces) [enter "dump" for no results]:')
-if model_name != "dump":
-    while os.path.exists('./results/' + model_name):
-        model_name = input('Model already exists. Please enter another name:')
-    os.mkdir('./results/' + model_name) 
 
 
 #scaler = torch.cuda.amp.GradScaler()
 print("Training...")
-for epoch in range(EPOCHS):
+
+start_epoch = 1
+if to_load == 'Y' or to_load == 'y':
+    if epoch_number == 'current':
+        start_epoch = int(input("What epoch does 'current' correspond to?"))
+    else:
+        start_epoch = int(epoch_number)
+    start_epoch += 1
+
+for epoch in range(start_epoch,EPOCHS):
 
     train_loss = 0.0
     train_step = 0
     train_items = 0
     model.train()
-    #t0 = time.time()
+    t0 = time.time()
     for inputs, labels in trainloader:
-        #print(time.time() - t0)
+        print("Data loading time %.3f" % (time.time() - t0))
 
         print(train_step)
 
         ##################################
-        #t0 = time.time()
+        t0 = time.time()
 
         #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
         #print('Sending to GPU...')
@@ -169,12 +197,12 @@ for epoch in range(EPOCHS):
         train_items += inputs.size(0)
 
 
-        #print(time.time() - t0)
-        #print('^^^^^^^^^')
+        print("Training time %.3f" % (time.time() - t0))
+        print('^^^^^^^^^')
         ############################
 
         #print('Loading data...')
-        #t0 = time.time()
+        t0 = time.time()
 
     
     plotter.plot('loss per item', 'train', 'Results', epoch, train_loss/train_items)
