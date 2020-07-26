@@ -27,14 +27,22 @@ class CustomModel(nn.Module):
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
+        self.dropout = torch.nn.Dropout(p=0.2)
                                                                                                                  # VOLUME SIZE                      # PARAMETERS
         # Encoding (input -> 512 vector)                                                                         # 3 x 144 x 144 x 144 -> 8.9M      (IN * F^3 + 1)*OUT
 
         # num_points*3, 8, 8
         self.down_conv_1 = nn.Conv3d(in_channels=3, out_channels=3, kernel_size=(3,3,3), stride=1, padding=0)     # K   x 136 x 136 x 136 ->        3*(3*9^3+1)     = 6.5K
+        self.batchnorm_1 = nn.BatchNorm3d(3)
+
         self.down_conv_2 = nn.Conv3d(in_channels=3, out_channels=44, kernel_size=(4,4,4), stride=3, padding=0) # K   x 64  x 64  x 64  ->        44*(3*10^3+1)   = 132K
+        self.batchnorm_2 = nn.BatchNorm3d(44)
+
         self.down_conv_3 = nn.Conv3d(in_channels=44, out_channels=32, kernel_size=(3,3,3), stride=2, padding=1)   # K   x 32  x 32  x 32  ->        32*(44*6^3+1)   = 305K
+        self.batchnorm_3 = nn.BatchNorm3d(32)
+
         self.down_conv_4 = nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,3), stride=3, padding=0)   # K   x 16  x 16  x 16  ->        76*(32*6^3+1)   = 525K
+        self.batchnorm_4 = nn.BatchNorm3d(32)
 
 
         # num_points*3 x 8 x 8 x 8 
@@ -44,16 +52,28 @@ class CustomModel(nn.Module):
     def forward(self, x):
         # Encoding
         x = self.down_conv_1(x) # Output: (3, 142, 142, 142)
+        x = self.batchnorm_1(x)
         x = self.relu(x)
+        x = self.dropout(x)
+
         x = self.down_conv_2(x) # Output: (44, 47, 47, 47)
+        x = self.batchnorm_2(x)
         x = self.relu(x)
+        x = self.dropout(x)
+
         x = self.down_conv_3(x) # Output: (32, 24, 24, 24)
+        x = self.batchnorm_3(x)
         x = self.relu(x)
+        x = self.dropout(x)
+
         x = self.down_conv_4(x) # Output: (32, 8, 8, 8)
+        x = self.batchnorm_4(x)
         x = self.tanh(x)
+        x = self.dropout(x)
 
         p = self.down_conv_5a(x)
         p = p.view(-1, num_points*3, 8, 8)
+
         s = self.down_conv_5b(x)
         s = s.view(-1, 3, 8, 8)
 
@@ -76,13 +96,22 @@ def get_data(in_fn, out_fn, mean, sdev):
     # Load TOM volume and preprocess
     tom = nib.load(in_fn).get_data() # 144 x 144 x 144 x 3
     tom = (tom - mean) / sdev # normalise based on dataset mean/stdev
+    
+    # On-the-fly augmentation
+    noise_stdev = np.random.uniform(low=0, high=0.05, size=None)
+    noise = np.random.normal(loc=0, scale=noise_stdev, size=tom.shape)
+    tom += noise
+
+    # Convert to torch
     tom = torch.from_numpy(np.float32(tom))
     tom = tom.permute(3, 0, 1, 2) # channels first for pytorch
-    
+
     # Load the tractogram
     streamlines, header = trackvis.read(out_fn)
     streamlines = [s[0] for s in streamlines]
     streamlines = np.array(streamlines)
+
+    
 
     # Get seed coordinates and convert streamlines to relative format
     seeds = [sl[0].copy() for sl in streamlines]
