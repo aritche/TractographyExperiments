@@ -31,25 +31,25 @@ class CustomModel(nn.Module):
                                                                                                                  # VOLUME SIZE                      # PARAMETERS
         # Encoding (input -> 512 vector)                                                                         # 3 x 144 x 144 x 144 -> 8.9M      (IN * F^3 + 1)*OUT
 
-        self.down_conv_1 = nn.Conv3d(in_channels=3, out_channels=3, kernel_size=(9,9,9), stride=1, padding=0)     # K   x 136 x 136 x 136 ->        3*(3*9^3+1)     = 6.5K
-        self.batchnorm_1 = nn.BatchNorm3d(3)
+        self.down_conv_1 = nn.Conv3d(in_channels=3, out_channels=32, kernel_size=(9,9,9), stride=1, padding=0)     # K   x 136 x 136 x 136 ->        3*(3*9^3+1)     = 6.5K
+        self.batchnorm_1 = nn.BatchNorm3d(32)
 
-        self.down_conv_2 = nn.Conv3d(in_channels=3, out_channels=44, kernel_size=(10,10,10), stride=2, padding=0) # K   x 64  x 64  x 64  ->        44*(3*10^3+1)   = 132K
-        self.batchnorm_2 = nn.BatchNorm3d(44)
+        self.down_conv_2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(10,10,10), stride=2, padding=0) # K   x 64  x 64  x 64  ->        44*(3*10^3+1)   = 132K
+        self.batchnorm_2 = nn.BatchNorm3d(64)
 
-        self.down_conv_3 = nn.Conv3d(in_channels=44, out_channels=32, kernel_size=(6,6,6), stride=2, padding=2)   # K   x 32  x 32  x 32  ->        32*(44*6^3+1)   = 305K
-        self.batchnorm_3 = nn.BatchNorm3d(32)
+        self.down_conv_3 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(6,6,6), stride=2, padding=2)   # K   x 32  x 32  x 32  ->        32*(44*6^3+1)   = 305K
+        self.batchnorm_3 = nn.BatchNorm3d(128)
 
-        self.down_conv_4 = nn.Conv3d(in_channels=32, out_channels=76, kernel_size=(6,6,6), stride=2, padding=2)   # K   x 16  x 16  x 16  ->        76*(32*6^3+1)   = 525K
-        self.batchnorm_4 = nn.BatchNorm3d(76)
+        self.down_conv_4 = nn.Conv3d(in_channels=128, out_channels=256, kernel_size=(6,6,6), stride=2, padding=2)   # K   x 16  x 16  x 16  ->        76*(32*6^3+1)   = 525K
+        self.batchnorm_4 = nn.BatchNorm3d(256)
 
-        self.down_conv_5 = nn.Conv3d(in_channels=76, out_channels=288, kernel_size=(3,3,3), stride=1, padding=1)  # K   x 16  x 16  x 16  ->        288*(76*3^3+1)  = 590K
-        self.batchnorm_5 = nn.BatchNorm3d(288)
+        self.down_conv_5 = nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,3), stride=1, padding=1)  # K   x 16  x 16  x 16  ->        288*(76*3^3+1)  = 590K
+        self.batchnorm_5 = nn.BatchNorm3d(256)
 
-        self.down_conv_6 = nn.Conv3d(in_channels=288, out_channels=150, kernel_size=(4,4,4), stride=2, padding=1) # K   x 8   x 8   x 8   ->        150*(288*4^3+1) = 2.7M
-        self.batchnorm_6 = nn.BatchNorm3d(150)
+        self.down_conv_6 = nn.Conv3d(in_channels=256, out_channels=512, kernel_size=(4,4,4), stride=2, padding=1) # K   x 8   x 8   x 8   ->        150*(288*4^3+1) = 2.7M
+        self.batchnorm_6 = nn.BatchNorm3d(512)
 
-        self.down_conv_7 = nn.Conv3d(in_channels=150, out_channels=512, kernel_size=(3,3,3), stride=1, padding=1) # K   x 8   x 8   x 8   ->        512*(150*3^3+1) = 2.1M
+        self.down_conv_7 = nn.Conv3d(in_channels=512, out_channels=512, kernel_size=(3,3,3), stride=1, padding=1) # K   x 8   x 8   x 8   ->        512*(150*3^3+1) = 2.1M
         self.batchnorm_7 = nn.BatchNorm3d(512)
 
         self.down_pool_8 = nn.MaxPool3d(kernel_size=8)                                                            # 512 x 1   x 1   x 1                  
