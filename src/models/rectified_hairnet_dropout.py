@@ -19,7 +19,7 @@ from nibabel import trackvis
 
 num_points = 40
 num_streamlines = 1024
-w_coords = 1 # weight for the coords loss
+w_coords = 10 # weight for the coords loss
 w_seeds =  1 # weight for the seeds loss
 
 class CustomModel(nn.Module):
