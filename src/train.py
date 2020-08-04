@@ -6,7 +6,7 @@ import os
 import sys
 
 #from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
-from models.custom_dataset_small import CustomDataset, CustomModel, CustomLoss
+from models.rectified_hairnet_dropout import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
 from resources.vis import VisdomLinePlotter
@@ -22,8 +22,8 @@ import time
 Hyperparameters
 """
 EPOCHS = 500
-BATCH_SIZE = 32
-LR = 10e-4
+BATCH_SIZE = 4
+LR = 10e-5
 VALID_SPLIT = 0.15
 np.random.seed(66)
 torch.manual_seed(66)
@@ -40,10 +40,30 @@ Load the data
 """
 print('Loading data...')
 
-TOMs_path =        '../data/64_40_CST_left/preprocessed/TOMs'
-beginnings_path =  '../data/64_40_CST_left/preprocessed/beginnings_masks'
-endings_path =     '../data/64_40_CST_left/preprocessed/endings_masks'
-tractograms_path = '../data/64_40_CST_left/not_preprocessed/tractograms'
+TOMs_path =        '../data/1024_40_CST_left_fixed/preprocessed/TOMs'
+beginnings_path =  '../data/1024_40_CST_left_fixed/preprocessed/beginnings_masks'
+endings_path =     '../data/1024_40_CST_left_fixed/preprocessed/endings_masks'
+tractograms_path = '../data/1024_40_CST_left_fixed/not_preprocessed/tractograms'
+
+#TOMs_path =        '../data/1024_40_CST_left_rectified/preprocessed/TOMs'
+#beginnings_path =  '../data/1024_40_CST_left_rectified/preprocessed/beginnings_masks'
+#endings_path =     '../data/1024_40_CST_left_rectified/preprocessed/endings_masks'
+#tractograms_path = '../data/1024_40_CST_left_rectified/not_preprocessed/tractograms'
+
+#TOMs_path =        '../data/64_40_CST_left_rectified_1000/preprocessed/TOMs'
+#beginnings_path =  '../data/64_40_CST_left_rectified_1000/preprocessed/beginnings_masks'
+#endings_path =     '../data/64_40_CST_left_rectified_1000/preprocessed/endings_masks'
+#tractograms_path = '../data/64_40_CST_left_rectified_1000/not_preprocessed/tractograms'
+
+#TOMs_path =        '../data/64_40_CST_left_rectified/preprocessed/TOMs'
+#beginnings_path =  '../data/64_40_CST_left_rectified/preprocessed/beginnings_masks'
+#endings_path =     '../data/64_40_CST_left_rectified/preprocessed/endings_masks'
+#tractograms_path = '../data/64_40_CST_left_rectified/not_preprocessed/tractograms'
+
+#TOMs_path =        '../data/64_40_CST_left/preprocessed/TOMs'
+#beginnings_path =  '../data/64_40_CST_left/preprocessed/beginnings_masks'
+#endings_path =     '../data/64_40_CST_left/preprocessed/endings_masks'
+#tractograms_path = '../data/64_40_CST_left/not_preprocessed/tractograms'
 
 #TOMs_path =        '../data/custom_dataset_105/preprocessed/TOMs'
 #beginnings_path =  '../data/custom_dataset_105/preprocessed/beginnings_masks'
@@ -95,8 +115,8 @@ train_indices, val_indices = indices[split:], indices[:split]
 train_sampler = SubsetRandomSampler(train_indices)
 valid_sampler = SubsetRandomSampler(val_indices)
 
-trainloader = torch.utils.data.DataLoader(dataset, sampler=train_sampler, batch_size=BATCH_SIZE)
-validloader = torch.utils.data.DataLoader(dataset, sampler=valid_sampler, batch_size=BATCH_SIZE)
+trainloader = torch.utils.data.DataLoader(dataset, sampler=train_sampler, batch_size=BATCH_SIZE, drop_last=True)
+validloader = torch.utils.data.DataLoader(dataset, sampler=valid_sampler, batch_size=BATCH_SIZE, drop_last=True)
 
 """
 Train the model
