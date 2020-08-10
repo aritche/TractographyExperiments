@@ -91,7 +91,7 @@ def preprocess_nifti_files():
 """
 
 # Preprocess a given subject 
-def preprocess_nifti_file(tom_fn, mask_fn, beginning_fn, ending_fn):
+def preprocess_nifti_file(tom_fn, mask_fn, seeds_fn, beginning_fn, ending_fn):
     # Get the appropriate affine transformation from the mask
     mask_object = nib.load(mask_fn[0])
     mask_data   = mask_object.get_data()
@@ -104,7 +104,7 @@ def preprocess_nifti_file(tom_fn, mask_fn, beginning_fn, ending_fn):
         bbox = [[0,mask_data.shape[0]], [0,mask_data.shape[1]], [0,mask_data.shape[2]]]
 
     # Perform the cropping/padding for all the files:
-    for fn_in, fn_out in [tom_fn, mask_fn, beginning_fn, ending_fn]:
+    for fn_in, fn_out in [tom_fn, mask_fn, seeds_fn, beginning_fn, ending_fn]:
         data = nib.load(fn_in).get_data()
 
         # Adjust the data to have 4 dims, since the cropping will iterate over this dim
@@ -247,9 +247,13 @@ tom_out = sys.argv[2]
 mask_in = sys.argv[3]
 mask_out = sys.argv[4]
 
-beginning_in = sys.argv[5]
-beginning_out = sys.argv[6]
+seeds_in = sys.argv[5]
+seeds_out = sys.argv[6]
 
-ending_in = sys.argv[7]
-ending_out = sys.argv[8]
-preprocess_nifti_file([tom_in, tom_out], [mask_in, mask_out], [beginning_in, beginning_out], [ending_in, ending_out])
+beginning_in = sys.argv[7]
+beginning_out = sys.argv[8]
+
+ending_in = sys.argv[9]
+ending_out = sys.argv[10]
+
+preprocess_nifti_file([tom_in, tom_out], [mask_in, mask_out], [seeds_in, seeds_out], [beginning_in, beginning_out], [ending_in, ending_out])
