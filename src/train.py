@@ -6,7 +6,7 @@ import os
 import sys
 
 #from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
-from models.rectified_hairnet_dropout import CustomDataset, CustomModel, CustomLoss
+from models.seeds_as_input import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
 from resources.vis import VisdomLinePlotter
@@ -40,10 +40,16 @@ Load the data
 """
 print('Loading data...')
 
-TOMs_path =        '../data/1024_40_CST_left_fixed/preprocessed/TOMs'
-beginnings_path =  '../data/1024_40_CST_left_fixed/preprocessed/beginnings_masks'
-endings_path =     '../data/1024_40_CST_left_fixed/preprocessed/endings_masks'
-tractograms_path = '../data/1024_40_CST_left_fixed/not_preprocessed/tractograms'
+TOMs_path =        '../data/seeds_1024_32_CST_left/preprocessed/TOMs'
+seeds_path =       '../data/seeds_1024_32_CST_left/preprocessed/seeds'
+beginnings_path =  '../data/seeds_1024_32_CST_left/preprocessed/beginnings_masks'
+endings_path =     '../data/seeds_1024_32_CST_left/preprocessed/endings_masks'
+tractograms_path = '../data/seeds_1024_32_CST_left/not_preprocessed/tractograms'
+
+#TOMs_path =        '../data/1024_40_CST_left_fixed/preprocessed/TOMs'
+#beginnings_path =  '../data/1024_40_CST_left_fixed/preprocessed/beginnings_masks'
+#endings_path =     '../data/1024_40_CST_left_fixed/preprocessed/endings_masks'
+#tractograms_path = '../data/1024_40_CST_left_fixed/not_preprocessed/tractograms'
 
 #TOMs_path =        '../data/1024_40_CST_left_rectified/preprocessed/TOMs'
 #beginnings_path =  '../data/1024_40_CST_left_rectified/preprocessed/beginnings_masks'
@@ -102,9 +108,9 @@ tractograms_path = '../data/1024_40_CST_left_fixed/not_preprocessed/tractograms'
 if len(sys.argv) == 7:
     means = [float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3])]
     sdevs = [float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6])]
-    dataset = CustomDataset(TOMs_path, beginnings_path, endings_path, tractograms_path, means = means, sdevs = sdevs)
+    dataset = CustomDataset(TOMs_path, seeds_path, beginnings_path, endings_path, tractograms_path, means = means, sdevs = sdevs)
 else:
-    dataset = CustomDataset(TOMs_path, beginnings_path, endings_path, tractograms_path)
+    dataset = CustomDataset(TOMs_path, seeds_path, beginnings_path, endings_path, tractograms_path)
 
 # Split into training/validation (https://stackoverflow.com/a/50544887)
 indices = list(range(len(dataset)))
@@ -155,10 +161,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1)
 
 # Print a summary
-summary(model, (3, 144, 144, 144))
+summary(model, (4, 144, 144, 144))
 input('Press any key to begin training...')
-
-
 
 #scaler = torch.cuda.amp.GradScaler()
 print("Training...")
@@ -188,8 +192,13 @@ for epoch in range(start_epoch,EPOCHS):
 
         #print("Training epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, train_step, len(trainloader)))
         #print('Sending to GPU...')
-        inputs, labels = inputs.to(device), [labels[0].to(device), labels[1].to(device)]
-        #inputs, labels = inputs.to(device), labels.to(device)
+        inputs = inputs.to(device)
+        if type(labels) is list:
+            for i in range(len(labels)):
+                labels[i] = labels[i].to(device)
+        else:
+            labels = labels.to(device)
+
         optimizer.zero_grad()
 
         #print('Stepping forward...')
@@ -234,8 +243,13 @@ for epoch in range(start_epoch,EPOCHS):
     with torch.no_grad():
         for inputs, labels in validloader:
             #print("Validation epoch %d/%d (step %d/%d)" % (epoch, EPOCHS, valid_step, len(validloader)))
-            inputs, labels = inputs.to(device), [labels[0].to(device), labels[1].to(device)]
-            #inputs, labels = inputs.to(device), labels.to(device)
+            inputs = inputs.to(device)
+            if type(labels) is list:
+                for i in range(len(labels)):
+                    labels[i] = labels[i].to(device)
+            else:
+                labels = labels.to(device)
+
             output = model.forward(inputs)
 
             loss = CustomLoss(output, labels)
