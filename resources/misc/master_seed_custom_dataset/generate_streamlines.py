@@ -50,6 +50,7 @@ def get_streamlines(seed, mid, ends, points_per_sl, num_sl_to_generate, seed_noi
 ref_sl_fn = "../../../data/PRE_SAMPLED/not_preprocessed/tractograms/599469_0_CST_left.trk"
 _, header = trackvis.read(ref_sl_fn)
 #print(header)
+#print(header)
 #keypoint_noise = 3
 #generic_noise = 0.35
 #translation= 3
@@ -71,9 +72,13 @@ points_per_sl = int(input("How many points per streamline?"))
 #start = [0.5, 0.5, 0.05]
 #mid = [0.4, 0.4, 0.7]
 #ends = [[0.2, 0.2, 0.85], [0.6, 0.6, 0.85]]
-start = [-30,-25,-60]
+#start = [-30,-25,-60]
+#mid = [-25,-30,20]
+#ends = [[-45,-30,50], [0,15,60]]
+
+start = [-30,-25,-50]
 mid = [-25,-30,20]
-ends = [[-45,-30,50], [0,15,60]]
+ends = [[-45,-30,45], [0,10,50]]
 
 for sl_num in range(int(num_to_gen)):
     start_current = start.copy()
