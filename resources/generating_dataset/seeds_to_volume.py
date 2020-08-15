@@ -19,7 +19,8 @@ def seeds_to_vol(trk_fn, tom_fn, out_fn):
     streamlines = np.array(streamlines)
 
     # Get the seeds
-    seeds = streamlines[:,0,:]
+    #seeds = streamlines[:,0,:]
+    seeds = [s[0] for s in streamlines]
 
     # Create a template output volume
     result = np.zeros((145,174,145))
