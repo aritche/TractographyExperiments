@@ -171,8 +171,8 @@ class CustomModel(nn.Module):
 
         p = self.pos_conv_3(p)    # Output: (num_points*3, 32, 32)
 
-        seeds_vol = seeds.view(-1,3,32,32).unsqueeze(-3).expand(-1,3,40,32,32).reshape(-1,120,32,32)
-        p = p.add(seeds_vol) # Make absolute coordinates
+        #seeds_vol = seeds.view(-1,3,32,32).unsqueeze(-3).expand(-1,3,40,32,32).reshape(-1,120,32,32)
+        #p = p.add(seeds_vol) # Make absolute coordinates
 
         return p
 
@@ -232,6 +232,12 @@ def get_data(tom_fn, tractogram_fn, beginnings_fn, endings_fn, mean, sdev, coord
     # automatically converts list to numpy array and reshapes it
     # (num_sl, points_per_sl, 3) -> (sqrt(num_sl), sqrt(num_sl), points_per_sl*3)
     # Performed in 2 successive steps because I don't know if it works if I do it in one step
+
+    # Remove seed points from streamlines
+    for i in range(len(streamlines)):
+        streamlines[i] -= streamlines[i][0]
+
+    # Reshape streamlines and convert to tensor
     streamlines = np.reshape(streamlines, (int(num_streamlines**(1/2)), int(num_streamlines**(1/2)), num_points, 3))
     streamlines = np.reshape(streamlines, (int(num_streamlines**(1/2)), int(num_streamlines**(1/2)), num_points*3))
     tractogram = torch.from_numpy(streamlines)
@@ -302,6 +308,8 @@ def OutputToStreamlines(output):
     streamlines = streamlines.permute(1, 2, 0) # (40*3, 32, 32) -> (32, 32, 40*3)
     streamlines = streamlines.cpu().detach().numpy()
     streamlines = np.reshape(streamlines, (num_streamlines, num_points, 3))
+
+    #streamlines = utils.apply_affine(aff=affine, pts=streamlines)
     
     #for i in range(len(streamlines)):
     #    streamlines[i] = streamlines[i] + seeds[i]
