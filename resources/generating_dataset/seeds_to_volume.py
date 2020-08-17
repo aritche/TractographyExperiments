@@ -6,7 +6,7 @@ from dipy.io.image import load_nifti
 from dipy.tracking import utils
 import numpy as np
 
-def seeds_to_vol(trk_fn, tom_fn, out_fn):
+def seeds_to_vol(trk_fn, tom_fn, out_fn, reverse):
     # Open references volume to get the affine transformation
     ref_data, ref_affine = load_nifti(tom_fn)
 
@@ -20,7 +20,10 @@ def seeds_to_vol(trk_fn, tom_fn, out_fn):
 
     # Get the seeds
     #seeds = streamlines[:,0,:]
-    seeds = [s[0] for s in streamlines]
+    if reverse == 0:
+        seeds = [s[0] for s in streamlines]
+    else:
+        seeds = [s[-1] for s in streamlines]
 
     # Create a template output volume
     result = np.zeros((145,174,145))
@@ -38,4 +41,5 @@ def seeds_to_vol(trk_fn, tom_fn, out_fn):
 trk_fn = sys.argv[1]
 tom_fn = sys.argv[2]
 out_fn = sys.argv[3]
-seeds_to_vol(trk_fn, tom_fn, out_fn)
+reverse = int(sys.argv[4])
+seeds_to_vol(trk_fn, tom_fn, out_fn, reverse)
