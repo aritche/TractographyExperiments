@@ -9,7 +9,7 @@ from dipy.io.image import load_nifti
 import cv2
 
 #from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
-from models.concat import CustomDataset, CustomModel, CustomLoss, OutputToStreamlines
+from models.final_hairnet import CustomDataset, CustomModel, CustomLoss, OutputToStreamlines
 #from models.seeds_as_input import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
@@ -49,17 +49,17 @@ Load the data
 """
 print('Loading data...')
 
-#TOMs_path =        '../data/final_hairnet/preprocessed/TOMs'
-#seeds_path =       '../data/final_hairnet/preprocessed/seeds'
-#beginnings_path =  '../data/final_hairnet/preprocessed/beginnings_masks'
-#endings_path =     '../data/final_hairnet/preprocessed/endings_masks'
-#tractograms_path = '../data/final_hairnet/not_preprocessed/tractograms'
+TOMs_path =        '../data/final_hairnet_dataset/preprocessed/TOMs'
+seeds_path =       '../data/final_hairnet_dataset/preprocessed/seeds'
+beginnings_path =  '../data/final_hairnet_dataset/preprocessed/seeds' # NOTE this difference
+endings_path =     '../data/final_hairnet_dataset/preprocessed/ends'  # NOTE this difference
+tractograms_path = '../data/final_hairnet_dataset/not_preprocessed/tractograms'
 
-TOMs_path =        '../data/concat_cst_left/preprocessed/TOMs'
-seeds_path =       '../data/concat_cst_left/preprocessed/seeds'
-beginnings_path =  '../data/concat_cst_left/preprocessed/beginnings_masks'
-endings_path =     '../data/concat_cst_left/preprocessed/endings_masks'
-tractograms_path = '../data/concat_cst_left/not_preprocessed/tractograms'
+#TOMs_path =        '../data/concat_cst_left/preprocessed/TOMs'
+#seeds_path =       '../data/concat_cst_left/preprocessed/seeds'
+#beginnings_path =  '../data/concat_cst_left/preprocessed/beginnings_masks'
+#endings_path =     '../data/concat_cst_left/preprocessed/endings_masks'
+#tractograms_path = '../data/concat_cst_left/not_preprocessed/tractograms'
 
 #TOMs_path =        '../data/concat_final_hairnet/preprocessed/TOMs'
 #seeds_path =       '../data/concat_final_hairnet/preprocessed/seeds'
@@ -170,7 +170,7 @@ def fast_vis(inputs, outputs, num_sl):
 
     return im
 
-_, affine = load_nifti(TOMs_path + '/599469_0.nii.gz')
+_, affine = load_nifti(TOMs_path + '/599469_0_CST_left.nii.gz')
 inverse_affine = np.linalg.inv(affine)
 if len(sys.argv) == 7:
     means = [float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3])]
@@ -315,7 +315,7 @@ for epoch in range(start_epoch,EPOCHS):
 
         #print('Loading data...')
         t0 = time.time()
-        break
+        #break
 
     plotter.plot('loss per item', 'train', 'Results', epoch, train_loss/train_items)
 
@@ -356,7 +356,7 @@ for epoch in range(start_epoch,EPOCHS):
             valid_loss += loss_item * num_items
             valid_step += 1
             valid_items += num_items
-            break
+            #break
             
     plotter.plot('loss per item', 'validation', 'Results', epoch, valid_loss/valid_items)
 
