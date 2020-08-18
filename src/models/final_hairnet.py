@@ -52,15 +52,15 @@ class CustomModel(nn.Module):
         self.down_conv_6 = nn.Conv3d(in_channels=256, out_channels=512, kernel_size=(4,4,4), stride=2, padding=1) # K   x 8   x 8   x 8   ->        150*(288*4^3+1) = 2.7M
         self.batchnorm_6 = nn.BatchNorm3d(512)
 
-        self.down_conv_7 = nn.Conv3d(in_channels=512, out_channels=2048, kernel_size=(3,3,3), stride=1, padding=1) # K   x 8   x 8   x 8   ->        512*(150*3^3+1) = 2.1M
-        self.batchnorm_7 = nn.BatchNorm3d(2048)
+        self.down_conv_7 = nn.Conv3d(in_channels=512, out_channels=512, kernel_size=(3,3,3), stride=1, padding=1) # K   x 8   x 8   x 8   ->        512*(150*3^3+1) = 2.1M
+        self.batchnorm_7 = nn.BatchNorm3d(512)
 
         self.down_pool_8 = nn.MaxPool3d(kernel_size=8)                                                            # 512 x 1   x 1   x 1                  
-        self.batchnorm_8 = nn.BatchNorm3d(2048)
+        self.batchnorm_8 = nn.BatchNorm3d(512)
 
         # Decoding (512 vector -> 32 x 32 x 512 volume)
-        #self.up_linear_1 = nn.Linear(in_features=512, out_features=1024)
-        self.up_linear_1 = nn.Linear(in_features=2048, out_features=4096)
+        self.up_linear_1 = nn.Linear(in_features=512, out_features=1024)
+        self.up_linear_2 = nn.Linear(in_features=1024, out_features=4096)
         self.up_conv_3 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1)
         self.batchnorm_9 = nn.BatchNorm2d(512)
         self.up_conv_4 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1)
@@ -82,7 +82,7 @@ class CustomModel(nn.Module):
         #self.batchnorm_15 = nn.BatchNorm2d(512)
         #self.seed_conv_3 = nn.Conv2d(in_channels=512, out_channels=3, kernel_size=1, stride=1, padding=0)
 
-    def forward(self, x, seeds):
+    def forward(self, x, seeds, fixed_encoding):
         # Input: 3 x 144 x 144 x 144
         x = self.down_conv_1(x) # Output: (3, 136, 136, 136)
         x = self.batchnorm_1(x)
@@ -124,15 +124,17 @@ class CustomModel(nn.Module):
         x = self.tanh(x)
         x = self.dropout(x)
 
-        x = x.view(-1, 2048)     # Output: (2048)
+        x = x.view(-1, 512)     # Output: (2048)
+        x = fixed_encoding
+        encoding = x.clone()
 
         x = self.up_linear_1(x) # Output: (1024)
         x = self.relu(x)
         x = self.dropout(x)
 
-        #x = self.up_linear_2(x) # Output: (4096)
-        #x = self.relu(x)
-        #x = self.dropout(x)
+        x = self.up_linear_2(x) # Output: (4096)
+        x = self.relu(x)
+        x = self.dropout(x)
 
         x = x.view(-1, 256, 4, 4) # Output: (256, 4, 4)
         x = self.upsample(x)      # Output: (256, 8, 8)
@@ -180,7 +182,7 @@ class CustomModel(nn.Module):
 
         #s = self.seed_conv_3(s)    # Output: (3, 32, 32)
 
-        return p
+        return [p,encoding]
 
 # Custom loss function
 def CustomLoss(output, target):
