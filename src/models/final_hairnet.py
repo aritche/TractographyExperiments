@@ -82,7 +82,8 @@ class CustomModel(nn.Module):
         #self.batchnorm_15 = nn.BatchNorm2d(512)
         #self.seed_conv_3 = nn.Conv2d(in_channels=512, out_channels=3, kernel_size=1, stride=1, padding=0)
 
-    def forward(self, x, seeds, fixed_encoding):
+    #def forward(self, x, seeds, fixed_encoding):
+    def forward(self, x, seeds):
         # Input: 3 x 144 x 144 x 144
         x = self.down_conv_1(x) # Output: (3, 136, 136, 136)
         x = self.batchnorm_1(x)
@@ -125,8 +126,8 @@ class CustomModel(nn.Module):
         x = self.dropout(x)
 
         x = x.view(-1, 512)     # Output: (2048)
-        x = fixed_encoding
-        encoding = x.clone()
+        #x = fixed_encoding
+        #encoding = x.clone()
 
         x = self.up_linear_1(x) # Output: (1024)
         x = self.relu(x)
@@ -182,7 +183,8 @@ class CustomModel(nn.Module):
 
         #s = self.seed_conv_3(s)    # Output: (3, 32, 32)
 
-        return [p,encoding]
+        #return [p,encoding]
+        return p
 
 # Custom loss function
 def CustomLoss(output, target):
