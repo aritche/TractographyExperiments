@@ -324,7 +324,7 @@ for epoch in range(start_epoch,EPOCHS):
 
         #print('Loading data...')
         t0 = time.time()
-        break
+        #break
 
     plotter.plot('loss per item', 'train', 'Results', epoch, train_loss/train_items)
 
@@ -365,7 +365,7 @@ for epoch in range(start_epoch,EPOCHS):
             valid_loss += loss_item * num_items
             valid_step += 1
             valid_items += num_items
-            break
+            #break
             
     plotter.plot('loss per item', 'validation', 'Results', epoch, valid_loss/valid_items)
 
