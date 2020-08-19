@@ -9,7 +9,7 @@ from dipy.io.image import load_nifti
 import cv2
 
 #from models.cst_left_3d import CustomDataset, CustomModel, CustomLoss
-from models.final_hairnet import CustomDataset, CustomModel, CustomLoss, OutputToStreamlines
+from models.junk import CustomDataset, CustomModel, CustomLoss, OutputToStreamlines
 #from models.seeds_as_input import CustomDataset, CustomModel, CustomLoss
 #from models.single_tract import CustomDataset, CustomModel, CustomLoss
 
@@ -18,6 +18,7 @@ import visdom
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+from mpl_toolkits import mplot3d
 
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -30,8 +31,8 @@ import time
 Hyperparameters
 """
 EPOCHS = 500
-BATCH_SIZE = 4
-LR = 10e-4
+BATCH_SIZE = 8
+LR = 10e-5
 VALID_SPLIT = 0.15
 np.random.seed(66)
 torch.manual_seed(66)
@@ -133,7 +134,7 @@ tractograms_path = '../data/final_hairnet_dataset/not_preprocessed/tractograms'
 #endings_path =     '../data/PRE_SAMPLED/preprocessed/endings_masks'
 #tractograms_path = '../data/PRE_SAMPLED/tractograms'
 
-def fast_vis(inputs, outputs, num_sl):
+def fast_vis(inputs, outputs, num_sl, reconstruct):
     # Get first item of batch
     seeds, output = inputs[1][0], outputs[0]
 
@@ -142,18 +143,26 @@ def fast_vis(inputs, outputs, num_sl):
     seeds = seeds.permute(1, 0).cpu().detach().numpy()
 
     # Reconstruct streamlines
-    for i in range(len(streamlines)):
-        streamlines[i] += seeds[i]
+    if reconstruct:
+        for i in range(len(streamlines)):
+            streamlines[i] += seeds[i]
 
     # Sample streamlines
-    streamlines = streamlines[np.random.choice(streamlines.shape[0],num_sl, replace=False)]
+    if num_sl != len(streamlines):
+        streamlines = streamlines[np.random.choice(streamlines.shape[0],num_sl, replace=False)]
 
     # Plot the result
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.set_xlim([0, 1])
-    ax.set_ylim([0, 1])
-    ax.set_zlim([0, 1])
+    if reconstruct:
+        ax.set_xlim([0, 1])
+        ax.set_ylim([0, 1])
+        ax.set_zlim([0, 1])
+    else:
+        ax.set_xlim([-0.5, 0.5])
+        ax.set_ylim([-0.5, 0.5])
+        ax.set_zlim([-1, 0.1])
+
     for i in range(num_sl):
         ax.plot(streamlines[i,:,0], streamlines[i,:,1], streamlines[i,:,2])
 
@@ -315,7 +324,7 @@ for epoch in range(start_epoch,EPOCHS):
 
         #print('Loading data...')
         t0 = time.time()
-        #break
+        break
 
     plotter.plot('loss per item', 'train', 'Results', epoch, train_loss/train_items)
 
@@ -356,14 +365,16 @@ for epoch in range(start_epoch,EPOCHS):
             valid_loss += loss_item * num_items
             valid_step += 1
             valid_items += num_items
-            #break
+            break
             
     plotter.plot('loss per item', 'validation', 'Results', epoch, valid_loss/valid_items)
 
     # Plot the results
-    label_im = fast_vis(inputs, labels, 20)
-    gen_im = fast_vis(inputs, output, 20)
-    image_plotter.images([label_im, gen_im], opts=dict(caption='Epoch ' + str(epoch)))
+    label_im = fast_vis(inputs, labels, 1024, True)
+    gen_im = fast_vis(inputs, output, 1024, True)
+    label_im_rel = fast_vis(inputs, labels, 1024, False)
+    gen_im_rel = fast_vis(inputs, output, 1024, False)
+    image_plotter.images([label_im, label_im_rel, gen_im, gen_im_rel], opts=dict(caption='Epoch ' + str(epoch)))
 
     scheduler.step(valid_loss)
 
