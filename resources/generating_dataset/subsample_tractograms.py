@@ -30,7 +30,7 @@ def get_offspring(tractogram_fn, num_sl_to_sample, output_dir, subject, tract_na
             new_streams = random.sample(streams, num_sl_to_sample)
         else: # If not enough streamlines to sample from, then just pad with all (0,0,0) streamlines
             new_streams = streams
-            while len(new_streams < num_sl_to_sample):
+            while len(new_streams) < num_sl_to_sample:
                 new_streams.append((np.zeros((40,3),dtype=np.float32), None, None))
 
         # Re-sample each streamline to have the required number of points
