@@ -20,12 +20,18 @@ def get_offspring(tractogram_fn, num_sl_to_sample, output_dir, subject, tract_na
     streams, header = trackvis.read(tractogram_fn)
 
     # Calculate how many samples to take
-    num_offspring = len(streams) // num_sl_to_sample
+    #print("%d streamlines in original file" % (len(streams)))
+    num_offspring = int(len(streams) / num_sl_to_sample * 1.5)
     num_offspring = num_offspring + 1 if num_offspring == 0 else num_offspring
 
     for i in range(num_offspring):
         # Sample the required number of streamlines
-        new_streams = random.sample(streams, num_sl_to_sample)
+        if len(streams) >= num_sl_to_sample:
+            new_streams = random.sample(streams, num_sl_to_sample)
+        else: # If not enough streamlines to sample from, then just pad with all (0,0,0) streamlines
+            new_streams = streams
+            while len(new_streams < num_sl_to_sample):
+                new_streams.append((np.zeros((40,3),dtype=np.float32), None, None))
 
         # Re-sample each streamline to have the required number of points
         # Since trackvis.read returns a tuple for each streamline (with streamline coordinates being
