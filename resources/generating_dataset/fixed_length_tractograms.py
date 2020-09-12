@@ -24,7 +24,7 @@ def get_offspring(tractogram_fn, output_dir, subject, tract_name, points_per_sl)
         streams[sl_num] = (resampled_points[sl_num], streams[sl_num][1], streams[sl_num][2])
 
     # Note, new header not needed since # of streamlines is automatically updated when the file is saved
-    trackvis.write(output_dir + "/" + subject + "_"+ str(i) + "_" + tract_name +".trk", streamlines=new_streams, hdr_mapping=header)
+    trackvis.write(output_dir + "/" + subject + "_" + tract_name + ".trk", streamlines=streams, hdr_mapping=header)
 
 if len(sys.argv) == 6:
     input_fn = sys.argv[1]
